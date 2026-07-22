@@ -10,11 +10,15 @@ import SpriteKit
 class GameScene: SKScene {
     override init(size: CGSize) {
         super.init(size: size)
-        backgroundColor = .black
+        configureScene()
     }
 
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
+        configureScene()
+    }
+
+    private func configureScene() {
         backgroundColor = .black
     }
 }
