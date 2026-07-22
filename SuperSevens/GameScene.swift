@@ -8,7 +8,13 @@
 import SpriteKit
 
 class GameScene: SKScene {
-    override func didMove(to view: SKView) {
+    override init(size: CGSize) {
+        super.init(size: size)
+        backgroundColor = .black
+    }
+
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
         backgroundColor = .black
     }
 }
