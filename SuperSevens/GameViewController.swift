@@ -13,7 +13,10 @@ class GameViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        guard let view = self.view as? SKView else { return }
+guard let view = self.view as? SKView else {
+    assertionFailure("Expected GameViewController.view to be an SKView")
+    return
+}
         let scene = GameScene(size: view.bounds.size)
         scene.scaleMode = .aspectFill
         view.presentScene(scene)
