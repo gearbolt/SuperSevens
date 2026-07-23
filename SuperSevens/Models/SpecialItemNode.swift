@@ -14,7 +14,7 @@ enum SpecialItemType: CaseIterable {
         case .star:
             return "★"
         case .heptagon:
-            return "⬢"
+            return "H7"
         case .minusOne:
             return "-1"
         case .divisionByTwo:

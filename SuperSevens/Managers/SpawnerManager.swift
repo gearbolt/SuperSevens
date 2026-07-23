@@ -9,7 +9,7 @@ final class SpawnerManager {
     private let spawnMargin: CGFloat = 36
     private let baseFallDuration: TimeInterval = 6
     private let spawnNodePrefix = "spawned_"
-    private var lastSpawnTime: TimeInterval = 0
+    private var lastSpawnTime: TimeInterval?
     private var isSpawning = false
 
     init(
@@ -26,7 +26,7 @@ final class SpawnerManager {
 
     func startSpawning() {
         isSpawning = true
-        lastSpawnTime = 0
+        lastSpawnTime = nil
     }
 
     func stopSpawning() {
@@ -36,16 +36,17 @@ final class SpawnerManager {
     func update(currentTime: TimeInterval, score: Int) {
         guard isSpawning else { return }
 
-        if lastSpawnTime == 0 {
+        if lastSpawnTime == nil {
             lastSpawnTime = currentTime
-            spawnItem(at: currentTime, score: score)
+            let interval = currentSpawnInterval(currentTime: currentTime, score: score)
+            spawnItem(interval: interval)
             return
         }
 
         let interval = currentSpawnInterval(currentTime: currentTime, score: score)
-        if currentTime - lastSpawnTime >= interval {
+        if currentTime - (lastSpawnTime ?? currentTime) >= interval {
             lastSpawnTime = currentTime
-            spawnItem(at: currentTime, score: score)
+            spawnItem(interval: interval)
         }
     }
 
@@ -80,7 +81,7 @@ final class SpawnerManager {
         return max(minimumSpawnInterval, baseSpawnInterval - timeReduction - scoreReduction)
     }
 
-    private func spawnItem(at currentTime: TimeInterval, score: Int) {
+    private func spawnItem(interval: TimeInterval) {
         guard let scene else { return }
 
         let maxX = max(spawnMargin, scene.size.width - spawnMargin)
@@ -100,7 +101,7 @@ final class SpawnerManager {
         node.position = CGPoint(x: x, y: y)
         scene.addChild(node)
 
-        let speedScale = max(0.6, currentSpawnInterval(currentTime: currentTime, score: score) / baseSpawnInterval)
+        let speedScale = max(0.6, interval / baseSpawnInterval)
         let duration = baseFallDuration * speedScale
         let moveDown = SKAction.moveTo(y: -120, duration: duration)
         let cleanup = SKAction.removeFromParent()
