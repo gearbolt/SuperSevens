@@ -4,10 +4,8 @@ final class NumberNode: SKShapeNode {
     let value: Int
 
     init(value: Int, radius: CGFloat = 28) {
-        if !(1...6).contains(value) {
-            assertionFailure("NumberNode value should be between 1 and 6.")
-        }
-        self.value = min(max(value, 1), 6)
+        precondition((1...6).contains(value), "NumberNode value should be between 1 and 6.")
+        self.value = value
         super.init()
 
         let path = CGPath(ellipseIn: CGRect(x: -radius, y: -radius, width: radius * 2, height: radius * 2), transform: nil)

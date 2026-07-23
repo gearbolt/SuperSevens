@@ -88,6 +88,7 @@ final class SpawnerManager {
 
     private func spawnItem(interval: TimeInterval) {
         guard let scene else { return }
+        assert(scene.size.width > spawnMargin * 2, "Scene width is too small for current spawn margins.")
 
         let minX = spawnMargin
         let maxX = scene.size.width - spawnMargin
