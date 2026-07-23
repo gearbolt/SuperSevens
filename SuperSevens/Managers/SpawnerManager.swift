@@ -4,12 +4,20 @@ final class SpawnerManager {
     weak var scene: SKScene?
     var baseSpawnInterval: TimeInterval {
         didSet {
-            precondition(baseSpawnInterval > 0, "baseSpawnInterval must be greater than zero.")
+            Self.validate(baseSpawnInterval: baseSpawnInterval, minimumSpawnInterval: minimumSpawnInterval)
             baseSpawnIntervalReciprocal = 1.0 / baseSpawnInterval
         }
     }
-    var minimumSpawnInterval: TimeInterval
-    var specialSpawnProbability: Double
+    var minimumSpawnInterval: TimeInterval {
+        didSet {
+            Self.validate(baseSpawnInterval: baseSpawnInterval, minimumSpawnInterval: minimumSpawnInterval)
+        }
+    }
+    var specialSpawnProbability: Double {
+        didSet {
+            Self.validate(specialSpawnProbability: specialSpawnProbability)
+        }
+    }
 
     private let spawnMargin: CGFloat = 36
     private let baseFallDuration: TimeInterval = 6
@@ -31,7 +39,8 @@ final class SpawnerManager {
         minimumSpawnInterval: TimeInterval = 0.35,
         specialSpawnProbability: Double = 0.15
     ) {
-        precondition(baseSpawnInterval > 0, "baseSpawnInterval must be greater than zero.")
+        Self.validate(baseSpawnInterval: baseSpawnInterval, minimumSpawnInterval: minimumSpawnInterval)
+        Self.validate(specialSpawnProbability: specialSpawnProbability)
         self.scene = scene
         self.baseSpawnInterval = baseSpawnInterval
         self.minimumSpawnInterval = minimumSpawnInterval
@@ -126,5 +135,21 @@ final class SpawnerManager {
         let moveDown = SKAction.moveTo(y: offscreenRemovalY, duration: duration)
         let cleanup = SKAction.removeFromParent()
         node.run(.sequence([moveDown, cleanup]))
+    }
+
+    private static func validate(baseSpawnInterval: TimeInterval, minimumSpawnInterval: TimeInterval) {
+        precondition(baseSpawnInterval > 0, "baseSpawnInterval must be greater than zero.")
+        precondition(minimumSpawnInterval > 0, "minimumSpawnInterval must be greater than zero.")
+        precondition(
+            minimumSpawnInterval <= baseSpawnInterval,
+            "minimumSpawnInterval must be less than or equal to baseSpawnInterval."
+        )
+    }
+
+    private static func validate(specialSpawnProbability: Double) {
+        precondition(
+            (0...1).contains(specialSpawnProbability),
+            "specialSpawnProbability must be between 0 and 1."
+        )
     }
 }
