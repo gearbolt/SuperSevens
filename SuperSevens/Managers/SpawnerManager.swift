@@ -110,7 +110,7 @@ final class SpawnerManager {
         let node: SKNode
         if Double.random(in: 0...1) < specialSpawnProbability {
             let itemTypes = SpecialItemType.allCases
-            let itemType = itemTypes[Int.random(in: 0..<itemTypes.count)]
+            let itemType = itemTypes.randomElement()!
             node = SpecialItemNode(itemType: itemType)
         } else {
             let value = Int.random(in: NumberNode.validRange)
