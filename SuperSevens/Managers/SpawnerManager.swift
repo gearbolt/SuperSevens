@@ -89,8 +89,9 @@ final class SpawnerManager {
     private func spawnItem(interval: TimeInterval) {
         guard let scene else { return }
 
-        let maxX = max(spawnMargin, scene.size.width - spawnMargin)
-        let x = CGFloat.random(in: spawnMargin...maxX)
+        let minX = spawnMargin
+        let maxX = scene.size.width - spawnMargin
+        let x: CGFloat = maxX >= minX ? CGFloat.random(in: minX...maxX) : scene.size.width / 2
         let y = scene.size.height + 80
 
         let node: SKNode
