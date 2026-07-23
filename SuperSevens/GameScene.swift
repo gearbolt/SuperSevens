@@ -188,11 +188,21 @@ class GameScene: SKScene {
 
     // MARK: - Selection
 
-    private func addNodeToSelection(at point: CGPoint) {
-        let candidates = nodes(at: point).filter {
-            $0.name?.hasPrefix(GameScene.spawnedPrefix) == true && !selectedNodes.contains($0)
+    private func nearestSpawnedAncestor(for node: SKNode) -> SKNode? {
+        var currentNode: SKNode? = node
+        while let candidate = currentNode {
+            if candidate.name?.hasPrefix(GameScene.spawnedPrefix) == true {
+                return candidate
+            }
+            currentNode = candidate.parent
         }
-        guard let node = candidates.first else { return }
+        return nil
+    }
+
+    private func addNodeToSelection(at point: CGPoint) {
+        let candidateNodes = nodes(at: point)
+            .compactMap(nearestSpawnedAncestor(for:))
+        guard let node = candidateNodes.first(where: { !selectedNodes.contains($0) }) else { return }
 
         node.removeAllActions()
         selectedNodes.append(node)
