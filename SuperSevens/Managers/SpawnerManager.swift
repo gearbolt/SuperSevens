@@ -49,8 +49,10 @@ final class SpawnerManager {
             return
         }
 
+        guard let previousSpawnTime = lastSpawnTime else { return }
+
         let interval = currentSpawnInterval(currentTime: currentTime, score: score)
-        if currentTime - (lastSpawnTime ?? currentTime) >= interval {
+        if currentTime - previousSpawnTime >= interval {
             lastSpawnTime = currentTime
             spawnItem(interval: interval)
         }
@@ -88,11 +90,11 @@ final class SpawnerManager {
 
     private func spawnItem(interval: TimeInterval) {
         guard let scene else { return }
-        assert(scene.size.width > spawnMargin * 2, "Scene width is too small for current spawn margins.")
+        precondition(scene.size.width > spawnMargin * 2, "Scene width must be greater than twice the spawn margin.")
 
         let minX = spawnMargin
         let maxX = scene.size.width - spawnMargin
-        let x: CGFloat = maxX >= minX ? CGFloat.random(in: minX...maxX) : scene.size.width / 2
+        let x = CGFloat.random(in: minX...maxX)
         let y = scene.size.height + 80
 
         let node: SKNode
