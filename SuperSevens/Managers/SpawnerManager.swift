@@ -65,9 +65,11 @@ final class SpawnerManager {
             node.name?.hasPrefix(spawnNodePrefix) == true
         }
 
-        guard let node = tappedSpawnedNodes.first else { return false }
-        node.removeAllActions()
-        node.removeFromParent()
+        guard tappedSpawnedNodes.isEmpty == false else { return false }
+        tappedSpawnedNodes.forEach { node in
+            node.removeAllActions()
+            node.removeFromParent()
+        }
         return true
     }
 
