@@ -2,7 +2,12 @@ import SpriteKit
 
 final class SpawnerManager {
     weak var scene: SKScene?
-    var baseSpawnInterval: TimeInterval
+    var baseSpawnInterval: TimeInterval {
+        didSet {
+            precondition(baseSpawnInterval > 0, "baseSpawnInterval must be greater than zero.")
+            baseSpawnIntervalReciprocal = 1.0 / baseSpawnInterval
+        }
+    }
     var minimumSpawnInterval: TimeInterval
     var specialSpawnProbability: Double
 
@@ -15,6 +20,7 @@ final class SpawnerManager {
     private let timeReductionRate: TimeInterval = 0.005
     private let maxScoreReduction: TimeInterval = 0.35
     private let scoreReductionRate: TimeInterval = 0.01
+    private var baseSpawnIntervalReciprocal: TimeInterval
     private var lastSpawnTime: TimeInterval?
     private var spawnStartTime: TimeInterval?
     private var isSpawning = false
@@ -25,10 +31,12 @@ final class SpawnerManager {
         minimumSpawnInterval: TimeInterval = 0.35,
         specialSpawnProbability: Double = 0.15
     ) {
+        precondition(baseSpawnInterval > 0, "baseSpawnInterval must be greater than zero.")
         self.scene = scene
         self.baseSpawnInterval = baseSpawnInterval
         self.minimumSpawnInterval = minimumSpawnInterval
         self.specialSpawnProbability = specialSpawnProbability
+        self.baseSpawnIntervalReciprocal = 1.0 / baseSpawnInterval
     }
 
     func startSpawning() {
@@ -92,7 +100,7 @@ final class SpawnerManager {
 
     private func spawnItem(interval: TimeInterval) {
         guard let scene else { return }
-        precondition(scene.size.width > spawnMargin * 2, "Scene width must be greater than twice the spawn margin.")
+        precondition(scene.size.width >= spawnMargin * 2, "Scene width must be at least twice the spawn margin.")
 
         let minX = spawnMargin
         let maxX = scene.size.width - spawnMargin
@@ -113,7 +121,7 @@ final class SpawnerManager {
         node.position = CGPoint(x: x, y: y)
         scene.addChild(node)
 
-        let speedScale = max(minimumSpeedScale, interval / baseSpawnInterval)
+        let speedScale = max(minimumSpeedScale, interval * baseSpawnIntervalReciprocal)
         let duration = baseFallDuration * speedScale
         let moveDown = SKAction.moveTo(y: offscreenRemovalY, duration: duration)
         let cleanup = SKAction.removeFromParent()
