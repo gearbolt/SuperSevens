@@ -44,7 +44,7 @@ class GameScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let location = touches.first?.location(in: self) else { return }
 
-        if spawnerManager?.removeTappedNode(at: location) == true {
+        if spawnerManager?.removeTappedNodes(at: location) == true {
             score += 1
         }
     }

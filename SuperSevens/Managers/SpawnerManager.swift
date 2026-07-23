@@ -16,6 +16,7 @@ final class SpawnerManager {
     private let maxScoreReduction: TimeInterval = 0.35
     private let scoreReductionRate: TimeInterval = 0.01
     private var lastSpawnTime: TimeInterval?
+    private var spawnStartTime: TimeInterval?
     private var isSpawning = false
 
     init(
@@ -33,6 +34,7 @@ final class SpawnerManager {
     func startSpawning() {
         isSpawning = true
         lastSpawnTime = nil
+        spawnStartTime = nil
     }
 
     func stopSpawning() {
@@ -42,23 +44,21 @@ final class SpawnerManager {
     func update(currentTime: TimeInterval, score: Int) {
         guard isSpawning else { return }
 
-        if lastSpawnTime == nil {
+        guard let previousSpawnTime = lastSpawnTime else {
+            spawnStartTime = currentTime
             lastSpawnTime = currentTime
-            let interval = currentSpawnInterval(currentTime: currentTime, score: score)
-            spawnItem(interval: interval)
             return
         }
 
-        let previousSpawnTime = lastSpawnTime!
-
-        let interval = currentSpawnInterval(currentTime: currentTime, score: score)
+        let elapsedTime = currentTime - (spawnStartTime ?? currentTime)
+        let interval = currentSpawnInterval(elapsedTime: elapsedTime, score: score)
         if currentTime - previousSpawnTime >= interval {
             lastSpawnTime = currentTime
             spawnItem(interval: interval)
         }
     }
 
-    func removeTappedNode(at point: CGPoint) -> Bool {
+    func removeTappedNodes(at point: CGPoint) -> Bool {
         guard let scene else { return false }
 
         let tappedSpawnedNodes = scene.nodes(at: point).filter { node in
@@ -84,8 +84,8 @@ final class SpawnerManager {
             }
     }
 
-    private func currentSpawnInterval(currentTime: TimeInterval, score: Int) -> TimeInterval {
-        let timeReduction = min(maxTimeReduction, currentTime * timeReductionRate)
+    private func currentSpawnInterval(elapsedTime: TimeInterval, score: Int) -> TimeInterval {
+        let timeReduction = min(maxTimeReduction, elapsedTime * timeReductionRate)
         let scoreReduction = min(maxScoreReduction, TimeInterval(score) * scoreReductionRate)
         return max(minimumSpawnInterval, baseSpawnInterval - timeReduction - scoreReduction)
     }
@@ -105,7 +105,7 @@ final class SpawnerManager {
             let itemType = itemTypes[Int.random(in: 0..<itemTypes.count)]
             node = SpecialItemNode(itemType: itemType)
         } else {
-            let value = Int.random(in: 1...6)
+            let value = Int.random(in: NumberNode.validRange)
             node = NumberNode(value: value)
         }
 

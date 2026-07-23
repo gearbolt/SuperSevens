@@ -1,10 +1,12 @@
 import SpriteKit
 
 final class NumberNode: SKShapeNode {
+    static let validRange = 1...6
+
     let value: Int
 
     init(value: Int, radius: CGFloat = 28) {
-        precondition((1...6).contains(value), "NumberNode value must be between 1 and 6.")
+        precondition(NumberNode.validRange.contains(value), "NumberNode value must be between 1 and 6.")
         self.value = value
         super.init()
 
