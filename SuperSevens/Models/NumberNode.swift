@@ -4,6 +4,7 @@ final class NumberNode: SKShapeNode {
     let value: Int
 
     init(value: Int, radius: CGFloat = 28) {
+        assert((1...6).contains(value), "NumberNode value should be between 1 and 6.")
         self.value = min(max(value, 1), 6)
         super.init()
 

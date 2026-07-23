@@ -9,6 +9,12 @@ final class SpawnerManager {
     private let spawnMargin: CGFloat = 36
     private let baseFallDuration: TimeInterval = 6
     private let spawnNodePrefix = "spawned_"
+    private let offscreenRemovalY: CGFloat = -120
+    private let minimumSpeedScale: TimeInterval = 0.6
+    private let maxTimeReduction: TimeInterval = 0.55
+    private let timeReductionRate: TimeInterval = 0.005
+    private let maxScoreReduction: TimeInterval = 0.35
+    private let scoreReductionRate: TimeInterval = 0.01
     private var lastSpawnTime: TimeInterval?
     private var isSpawning = false
 
@@ -65,10 +71,9 @@ final class SpawnerManager {
 
     func cleanupOutOfBoundsNodes() {
         guard let scene else { return }
-        let minY = -120.0
 
         scene.children
-            .filter { $0.name?.hasPrefix(spawnNodePrefix) == true && $0.position.y < minY }
+            .filter { $0.name?.hasPrefix(spawnNodePrefix) == true && $0.position.y < offscreenRemovalY }
             .forEach { node in
                 node.removeAllActions()
                 node.removeFromParent()
@@ -76,8 +81,8 @@ final class SpawnerManager {
     }
 
     private func currentSpawnInterval(currentTime: TimeInterval, score: Int) -> TimeInterval {
-        let timeReduction = min(0.55, currentTime * 0.005)
-        let scoreReduction = min(0.35, Double(score) * 0.01)
+        let timeReduction = min(maxTimeReduction, currentTime * timeReductionRate)
+        let scoreReduction = min(maxScoreReduction, TimeInterval(score) * scoreReductionRate)
         return max(minimumSpawnInterval, baseSpawnInterval - timeReduction - scoreReduction)
     }
 
@@ -101,9 +106,9 @@ final class SpawnerManager {
         node.position = CGPoint(x: x, y: y)
         scene.addChild(node)
 
-        let speedScale = max(0.6, interval / baseSpawnInterval)
+        let speedScale = max(minimumSpeedScale, interval / baseSpawnInterval)
         let duration = baseFallDuration * speedScale
-        let moveDown = SKAction.moveTo(y: -120, duration: duration)
+        let moveDown = SKAction.moveTo(y: offscreenRemovalY, duration: duration)
         let cleanup = SKAction.removeFromParent()
         node.run(.sequence([moveDown, cleanup]))
     }
