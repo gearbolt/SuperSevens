@@ -49,7 +49,7 @@ final class SpawnerManager {
             return
         }
 
-        guard let previousSpawnTime = lastSpawnTime else { return }
+        let previousSpawnTime = lastSpawnTime!
 
         let interval = currentSpawnInterval(currentTime: currentTime, score: score)
         if currentTime - previousSpawnTime >= interval {
@@ -99,7 +99,8 @@ final class SpawnerManager {
 
         let node: SKNode
         if Double.random(in: 0...1) < specialSpawnProbability {
-            let itemType = SpecialItemType.allCases.randomElement() ?? .star
+            let itemTypes = SpecialItemType.allCases
+            let itemType = itemTypes[Int.random(in: 0..<itemTypes.count)]
             node = SpecialItemNode(itemType: itemType)
         } else {
             let value = Int.random(in: 1...6)
