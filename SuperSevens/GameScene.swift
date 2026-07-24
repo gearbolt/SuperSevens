@@ -17,10 +17,6 @@ class GameScene: SKScene {
     private weak var runningTotalLabel: SKLabelNode?
     private weak var gameOverNode: SKNode?
 
-    private static let spawnedPrefix = "spawned_"
-    // Must match SpawnerManager.offscreenRemovalY so deselected nodes resume
-    // falling to the same threshold used during initial spawn.
-    private static let offscreenRemovalY: CGFloat = -120
     // Approximate total travel distance for spawned nodes (scene height + spawn
     // offset above screen + removal threshold below). Used to proportionally
     // scale resumed fall durations.
@@ -145,7 +141,7 @@ class GameScene: SKScene {
         gameOverNode?.removeFromParent()
         gameOverNode = nil
         children
-            .filter { $0.name?.hasPrefix(GameScene.spawnedPrefix) == true }
+            .filter { $0.name?.hasPrefix(SpawnerManager.spawnNodePrefix) == true }
             .forEach { $0.removeFromParent() }
         gameManager.reset()
         updateScoreLabel()
@@ -191,7 +187,7 @@ class GameScene: SKScene {
     private func nearestSpawnedAncestor(for node: SKNode) -> SKNode? {
         var currentNode: SKNode? = node
         while let candidate = currentNode {
-            if candidate.name?.hasPrefix(GameScene.spawnedPrefix) == true {
+            if candidate.name?.hasPrefix(SpawnerManager.spawnNodePrefix) == true {
                 return candidate
             }
             currentNode = candidate.parent
@@ -252,16 +248,16 @@ class GameScene: SKScene {
     private func resumeAndUnhighlight(_ nodes: [SKNode]) {
         nodes.forEach { node in
             applyHighlight(node, selected: false)
-            let remainingY = node.position.y - GameScene.offscreenRemovalY
+            let remainingY = node.position.y - SpawnerManager.offscreenRemovalY
             guard remainingY > 0 else {
                 node.removeFromParent()
                 return
             }
             // Scale fall duration proportionally to remaining travel distance.
             // totalTravelY = scene height + spawn offset (80) + |offscreenRemovalY| (120).
-            let totalTravelY = size.height + 80 + abs(GameScene.offscreenRemovalY)
+            let totalTravelY = size.height + 80 + abs(SpawnerManager.offscreenRemovalY)
             let duration = max(0.5, (remainingY / totalTravelY) * GameScene.baseFallDuration)
-            let moveDown = SKAction.moveTo(y: GameScene.offscreenRemovalY, duration: duration)
+            let moveDown = SKAction.moveTo(y: SpawnerManager.offscreenRemovalY, duration: duration)
             let cleanup = SKAction.removeFromParent()
             node.run(.sequence([moveDown, cleanup]))
         }
