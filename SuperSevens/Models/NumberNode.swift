@@ -26,6 +26,6 @@ final class NumberNode: SKShapeNode {
     }
 
     required init?(coder aDecoder: NSCoder) {
-        return nil
+        fatalError("init(coder:) is not supported for NumberNode.")
     }
 }
