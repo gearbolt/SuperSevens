@@ -13,6 +13,7 @@ class GameScene: SKScene {
 
     private var selectedNodes: [SKNode] = []
     private var lineNode: SKShapeNode?
+    private weak var activeTouch: UITouch?
     private weak var scoreLabel: SKLabelNode?
     private weak var runningTotalLabel: SKLabelNode?
     private weak var gameOverNode: SKNode?
@@ -151,14 +152,16 @@ class GameScene: SKScene {
     // MARK: - Touch Handling
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        let location = touch.location(in: self)
-
         if gameManager.gameState == .gameOver {
             restartGame()
             return
         }
 
+        guard gameManager.gameState == .playing else { return }
+        guard activeTouch == nil, let touch = touches.first else { return }
+        activeTouch = touch
+
+        let location = touch.location(in: self)
         clearSelection(resumeNodes: true)
         addNodeToSelection(at: location)
         updateLine(to: location)
@@ -166,19 +169,27 @@ class GameScene: SKScene {
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard gameManager.gameState == .playing else { return }
-        guard let touch = touches.first else { return }
-        let location = touch.location(in: self)
+        guard let touch = activeTouch, touches.contains(touch) else { return }
 
+        let location = touch.location(in: self)
         addNodeToSelection(at: location)
         updateLine(to: location)
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard gameManager.gameState == .playing else { return }
+        guard let touch = activeTouch, touches.contains(touch) else { return }
+
+        activeTouch = nil
         finalizeSelection()
     }
 
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if let touch = activeTouch, !touches.contains(touch) {
+            return
+        }
+
+        activeTouch = nil
         clearSelection(resumeNodes: true)
     }
 
