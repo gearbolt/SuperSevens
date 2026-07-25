@@ -33,18 +33,20 @@ final class GameManager {
     // Evaluates the chain left-to-right and returns the running total.
     // NumberNode values are summed; SpecialItemNodes apply their modifier.
     // Heptagon sets a flag that negates the next NumberNode's value.
-    func evaluate(_ nodes: [GameNode], stopOnExceed: Bool) -> Int {
-        evaluateChain(nodes, stopOnExceed: stopOnExceed).total
+    func evaluate(_ nodes: [GameNode], haltOnExceed: Bool) -> Int {
+        evaluateChain(nodes, haltOnExceed: haltOnExceed).total
     }
 
     func evaluate(_ nodes: [SKNode]) -> Int {
-        evaluate(nodes.compactMap { $0 as? GameNode }, stopOnExceed: true)
+        evaluate(nodes.compactMap { $0 as? GameNode }, haltOnExceed: true)
     }
 
+    // Returns true only when the evaluated total is exactly 7.
+    // If the running total exceeds 7 at any point, this returns false and sets game state to game over.
     func validateCombination(_ nodes: [GameNode]) -> Bool {
         guard gameState == .playing else { return false }
         guard !nodes.isEmpty else { return false }
-        let evaluation = evaluateChain(nodes, stopOnExceed: true)
+        let evaluation = evaluateChain(nodes, haltOnExceed: true)
         if evaluation.exceeded {
             gameState = .gameOver
             return false
@@ -52,7 +54,7 @@ final class GameManager {
         return evaluation.total == 7
     }
 
-    private func evaluateChain(_ nodes: [GameNode], stopOnExceed: Bool) -> (total: Int, exceeded: Bool) {
+    private func evaluateChain(_ nodes: [GameNode], haltOnExceed: Bool) -> (total: Int, exceeded: Bool) {
         var total = 0
         var negateNext = false
 
@@ -76,7 +78,7 @@ final class GameManager {
                 }
             }
 
-            if total > 7 && stopOnExceed {
+            if total > 7 && haltOnExceed {
                 return (total, true)
             }
         }
@@ -120,8 +122,8 @@ final class GameManager {
                 .filter { !($0 is GameNode) }
                 .map { String(describing: type(of: $0)) }
                 .joined(separator: ", ")
-            NSLog("submitCombination received non-GameNode nodes: \(invalidTypes)")
-            assertionFailure("submitCombination received non-GameNode nodes: \(invalidTypes)")
+            NSLog("Received non-GameNode nodes: \(invalidTypes)")
+            assertionFailure("Received non-GameNode nodes: \(invalidTypes)")
             return nil
         }
         return gameNodes
