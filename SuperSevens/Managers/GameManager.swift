@@ -37,8 +37,9 @@ final class GameManager {
         evaluateChain(nodes, haltOnExceed: haltOnExceed).total
     }
 
-    func evaluate(_ nodes: [SKNode]) -> Int {
-        evaluate(nodes.compactMap { $0 as? GameNode }, haltOnExceed: true)
+func evaluate(_ nodes: [SKNode]) -> Int {
+        guard let gameNodes = convertToGameNodes(nodes) else { return 0 }
+        return evaluate(gameNodes, haltOnExceed: true)
     }
 
     // Returns true only when the evaluated total is exactly 7.
