@@ -33,7 +33,7 @@ final class GameManager {
     // Evaluates the chain left-to-right and returns the running total.
     // NumberNode values are summed; SpecialItemNodes apply their modifier.
     // Heptagon sets a flag that negates the next NumberNode's value.
-    func evaluate(_ nodes: [GameNode], haltOnExceed: Bool) -> Int {
+    private func evaluate(_ nodes: [GameNode], haltOnExceed: Bool) -> Int {
         evaluateChain(nodes, haltOnExceed: haltOnExceed).total
     }
 
@@ -122,7 +122,6 @@ final class GameManager {
                 .filter { !($0 is GameNode) }
                 .map { String(describing: type(of: $0)) }
                 .joined(separator: ", ")
-            NSLog("Received non-GameNode nodes: \(invalidTypes)")
             assertionFailure("Received non-GameNode nodes: \(invalidTypes)")
             return nil
         }
