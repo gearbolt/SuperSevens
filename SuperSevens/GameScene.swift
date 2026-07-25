@@ -13,7 +13,7 @@ class GameScene: SKScene {
 
     private var selectedNodes: [SKNode] = []
     private var lineNode: SKShapeNode?
-    private weak var activeTouch: UITouch?
+    private var activeTouch: UITouch?
     private weak var scoreLabel: SKLabelNode?
     private weak var runningTotalLabel: SKLabelNode?
     private weak var gameOverNode: SKNode?
