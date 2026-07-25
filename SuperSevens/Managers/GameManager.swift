@@ -42,7 +42,8 @@ final class GameManager {
     }
 
     func validateCombination(_ nodes: [GameNode]) -> Bool {
-        guard gameState == .playing, !nodes.isEmpty else { return false }
+        guard gameState == .playing else { return false }
+        guard !nodes.isEmpty else { return false }
         let evaluation = evaluateChain(nodes, stopOnExceed: true)
         if evaluation.exceeded {
             gameState = .gameOver
@@ -88,15 +89,7 @@ final class GameManager {
     @discardableResult
     func submitCombination(_ nodes: [SKNode]) -> CombinationResult {
         guard gameState == .playing, !nodes.isEmpty else { return .invalid }
-        let gameNodes = nodes.compactMap { $0 as? GameNode }
-        guard gameNodes.count == nodes.count else {
-            let invalidTypes = nodes
-                .filter { !($0 is GameNode) }
-                .map { String(describing: type(of: $0)) }
-                .joined(separator: ", ")
-            assertionFailure("submitCombination received non-GameNode nodes: \(invalidTypes)")
-            return .invalid
-        }
+        guard let gameNodes = convertToGameNodes(nodes) else { return .invalid }
         if validateCombination(gameNodes) {
             score += scoreForChain(gameNodes)
             return .success
@@ -118,5 +111,18 @@ final class GameManager {
             .count
         let bonus = multiplierCount > 0 ? multiplierCount * 2 : 1
         return 100 * nodes.count * bonus
+    }
+
+    private func convertToGameNodes(_ nodes: [SKNode]) -> [GameNode]? {
+        let gameNodes = nodes.compactMap { $0 as? GameNode }
+        guard gameNodes.count == nodes.count else {
+            let invalidTypes = nodes
+                .filter { !($0 is GameNode) }
+                .map { String(describing: type(of: $0)) }
+                .joined(separator: ", ")
+            assertionFailure("submitCombination received non-GameNode nodes: \(invalidTypes)")
+            return nil
+        }
+        return gameNodes
     }
 }
