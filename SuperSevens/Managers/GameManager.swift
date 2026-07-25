@@ -60,6 +60,12 @@ func evaluate(_ nodes: [SKNode]) -> Int {
         var negateNext = false
 
         for node in nodes {
+            // Exactly one of the two properties must be non-nil (XOR).
+            assert(
+                (node.nodeNumberValue != nil) != (node.nodeSpecialItemType != nil),
+                "GameNode invariant violated: exactly one of nodeNumberValue or nodeSpecialItemType must be non-nil"
+            )
+
             if let numberValue = node.nodeNumberValue {
                 let contribution = negateNext ? -numberValue : numberValue
                 total += contribution
