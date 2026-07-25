@@ -187,11 +187,7 @@ class GameScene: SKScene {
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = activeTouch, touches.contains(touch) else { return }
         activeTouch = nil
-        if gameManager.gameState == .playing {
-            clearSelection(resumeNodes: true)
-        } else {
-            clearSelection(resumeNodes: false)
-        }
+        clearSelection(resumeNodes: true)
     }
 
     // MARK: - Selection
