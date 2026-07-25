@@ -89,7 +89,10 @@ final class GameManager {
     func submitCombination(_ nodes: [SKNode]) -> CombinationResult {
         guard gameState == .playing, !nodes.isEmpty else { return .invalid }
         let gameNodes = nodes.compactMap { $0 as? GameNode }
-        guard gameNodes.count == nodes.count else { return .invalid }
+        guard gameNodes.count == nodes.count else {
+            assertionFailure("submitCombination received non-GameNode nodes.")
+            return .invalid
+        }
         if validateCombination(gameNodes) {
             score += scoreForChain(gameNodes)
             return .success
