@@ -1,6 +1,6 @@
 import SpriteKit
 
-enum SpecialItemType: CaseIterable {
+enum SpecialItemType: CaseIterable, Hashable {
     case multiplier
     case star
     case heptagon
@@ -62,5 +62,15 @@ final class SpecialItemNode: SKShapeNode {
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) is not supported for SpecialItemNode.")
+    }
+
+    func prepareForReuse() {
+        alpha = 1
+        xScale = 1
+        yScale = 1
+        zRotation = 0
+        fillColor = itemType.color
+        strokeColor = .white
+        lineWidth = 2
     }
 }

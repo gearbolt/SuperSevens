@@ -40,6 +40,16 @@ final class GameManagerTests: XCTestCase {
         XCTAssertTrue(result)
     }
 
+    func testValidateCombinationSupportsStar() {
+        let manager = GameManager()
+
+        let result = manager.validateCombination([
+            MockNode.item(.star)
+        ])
+
+        XCTAssertTrue(result)
+    }
+
     func testValidateCombinationSupportsMinusOne() {
         let manager = GameManager()
 
@@ -47,6 +57,19 @@ final class GameManagerTests: XCTestCase {
             MockNode.number(4),
             MockNode.item(.minusOne),
             MockNode.number(4)
+        ])
+
+        XCTAssertTrue(result)
+    }
+
+    func testValidateCombinationSupportsHeptagonNegation() {
+        let manager = GameManager()
+
+        let result = manager.validateCombination([
+            MockNode.number(6),
+            MockNode.item(.heptagon),
+            MockNode.number(1),
+            MockNode.number(2)
         ])
 
         XCTAssertTrue(result)
@@ -123,5 +146,43 @@ final class GameManagerTests: XCTestCase {
         let manager = GameManager()
 
         XCTAssertEqual(manager.highScore, 999)
+    }
+
+    func testScoreCalculationUsesChainLengthWithoutMultiplierBonus() {
+        let manager = GameManager()
+
+        let score = manager.score(for: [
+            MockNode.number(3),
+            MockNode.number(4)
+        ])
+
+        XCTAssertEqual(score, 200)
+    }
+
+    func testScoreCalculationAppliesMultiplierBonusPerMultiplierNode() {
+        let manager = GameManager()
+
+        let score = manager.score(for: [
+            MockNode.number(1),
+            MockNode.item(.multiplier),
+            MockNode.number(1),
+            MockNode.item(.multiplier),
+            MockNode.number(1)
+        ])
+
+        XCTAssertEqual(score, 2_000)
+    }
+
+    func testSubmitCombinationAwardsCalculatedScore() {
+        let manager = GameManager()
+        let nodes: [SKNode] = [
+            NumberNode(value: 3),
+            NumberNode(value: 4)
+        ]
+
+        let result = manager.submitCombination(nodes)
+
+        XCTAssertEqual(result, .success)
+        XCTAssertEqual(manager.score, 200)
     }
 }
