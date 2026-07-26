@@ -17,8 +17,13 @@ class GameViewController: UIViewController {
             assertionFailure("Expected GameViewController.view to be an SKView")
             return
         }
-        view.isAccessibilityElement = true
-        view.accessibilityIdentifier = "gameView"
+        let processInfo = ProcessInfo.processInfo
+        let isUITestScenario = processInfo.environment["SUPERSEVENS_UI_TEST_SCENARIO"] != nil ||
+            processInfo.arguments.contains("-uiTestScenario")
+        if isUITestScenario {
+            view.isAccessibilityElement = true
+            view.accessibilityIdentifier = "gameView"
+        }
         let scene = GameScene(size: view.bounds.size)
         scene.scaleMode = .aspectFill
         view.presentScene(scene)
