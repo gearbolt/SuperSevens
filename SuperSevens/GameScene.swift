@@ -300,12 +300,13 @@ class GameScene: SKScene {
     }
 
     private func toggleMuteSetting() {
-        _ = SoundManager.shared.toggleMute()
-        updateMuteLabel()
+        let isMuted = SoundManager.shared.toggleMute()
+        updateMuteLabel(isMuted: isMuted)
     }
 
-    private func updateMuteLabel() {
-        muteLabel?.text = SoundManager.shared.isMuted ? "🔇 Sound Off" : "🔊 Sound On"
+    private func updateMuteLabel(isMuted: Bool? = nil) {
+        let currentMuteState = isMuted ?? SoundManager.shared.isMuted
+        muteLabel?.text = currentMuteState ? "🔇 Sound Off" : "🔊 Sound On"
     }
 
     private func clearSelection(resumeNodes: Bool) {
