@@ -92,10 +92,12 @@ final class SoundManager {
     }
 
     private func createPlayer(named name: String, loops: Int) -> AVAudioPlayer? {
-        guard
-            let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: Asset.audioSubdirectory),
-            let player = try? AVAudioPlayer(contentsOf: url)
-        else {
+        guard let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: Asset.audioSubdirectory) else {
+            assertionFailure("Missing audio asset: \(Asset.audioSubdirectory)/\(name).wav")
+            return nil
+        }
+        guard let player = try? AVAudioPlayer(contentsOf: url) else {
+            assertionFailure("Failed to load audio asset: \(url.lastPathComponent)")
             return nil
         }
         player.numberOfLoops = loops

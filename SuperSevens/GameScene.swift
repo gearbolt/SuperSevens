@@ -292,19 +292,16 @@ class GameScene: SKScene {
             let expandY = max(0, (minHitSize - tapArea.height) / 2)
             tapArea = tapArea.insetBy(dx: -expandX, dy: -expandY)
             if tapArea.contains(location) {
-                _ = SoundManager.shared.toggleMute()
-                updateMuteLabel()
+                toggleMuteSetting()
                 return true
             }
         }
-
-        let touchedNode = atPoint(location)
-        if touchedNode.name == "muteToggleLabel" {
-            _ = SoundManager.shared.toggleMute()
-            updateMuteLabel()
-            return true
-        }
         return false
+    }
+
+    private func toggleMuteSetting() {
+        _ = SoundManager.shared.toggleMute()
+        updateMuteLabel()
     }
 
     private func updateMuteLabel() {
