@@ -98,49 +98,47 @@ class GameScene: SKScene {
 
     private func showGameOver() {
         spawnerManager?.stopSpawning()
-
-        let overlay = SKNode()
+        let overlay = GameOverNode(
+            score: gameManager.score,
+            highScore: gameManager.highScore,
+            isNewHighScore: gameManager.isNewHighScore
+        )
         overlay.zPosition = 20
-        overlay.name = "gameOverOverlay"
-
-        let bg = SKShapeNode(rectOf: CGSize(width: 280, height: 170), cornerRadius: 16)
-        bg.fillColor = SKColor(white: 0, alpha: 0.85)
-        bg.strokeColor = .white
-        bg.lineWidth = 2
-        overlay.addChild(bg)
-
-        let titleLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
-        titleLabel.text = "Game Over"
-        titleLabel.fontSize = 36
-        titleLabel.fontColor = .red
-        titleLabel.verticalAlignmentMode = .center
-        titleLabel.position = CGPoint(x: 0, y: 30)
-        overlay.addChild(titleLabel)
-
-        let finalScoreLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
-        finalScoreLabel.text = "Score: \(gameManager.score)"
-        finalScoreLabel.fontSize = 22
-        finalScoreLabel.fontColor = .white
-        finalScoreLabel.verticalAlignmentMode = .center
-        finalScoreLabel.position = CGPoint(x: 0, y: -10)
-        overlay.addChild(finalScoreLabel)
-
-        let tapLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
-        tapLabel.text = "Tap to play again"
-        tapLabel.fontSize = 16
-        tapLabel.fontColor = .lightGray
-        tapLabel.verticalAlignmentMode = .center
-        tapLabel.position = CGPoint(x: 0, y: -52)
-        overlay.addChild(tapLabel)
-
         overlay.position = CGPoint(x: size.width / 2, y: size.height / 2)
         addChild(overlay)
         gameOverNode = overlay
     }
 
+    private func handleGameOverTap(at location: CGPoint) {
+        var candidate: SKNode? = atPoint(location)
+        while let node = candidate {
+            switch node.name {
+            case GameOverNode.playAgainButtonName:
+                restartGame()
+                return
+            case GameOverNode.mainMenuButtonName:
+                goToMainMenu()
+                return
+            default:
+                candidate = node.parent
+            }
+        }
+    }
+
+    private func goToMainMenu() {
+        guard let view else { return }
+        let freshScene = GameScene(size: size)
+        freshScene.scaleMode = scaleMode
+        view.presentScene(freshScene, transition: .crossFade(withDuration: 0.5))
+    }
+
     private func restartGame() {
         gameOverNode?.removeFromParent()
         gameOverNode = nil
+        lineNode?.removeFromParent()
+        lineNode = nil
+        selectedNodes.removeAll()
+        activeTouch = nil
         children
             .filter { $0.name?.hasPrefix(SpawnerManager.spawnNodePrefix) == true }
             .forEach { $0.removeFromParent() }
@@ -152,16 +150,16 @@ class GameScene: SKScene {
     // MARK: - Touch Handling
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let location = touch.location(in: self)
+
         if gameManager.gameState == .gameOver {
-            restartGame()
+            handleGameOverTap(at: location)
             return
         }
 
-        guard gameManager.gameState == .playing else { return }
-        guard activeTouch == nil, let touch = touches.first else { return }
+        guard gameManager.gameState == .playing, activeTouch == nil else { return }
         activeTouch = touch
-
-        let location = touch.location(in: self)
         clearSelection(resumeNodes: true)
         addNodeToSelection(at: location)
         updateLine(to: location)
@@ -177,10 +175,9 @@ class GameScene: SKScene {
     }
 
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard gameManager.gameState == .playing else { return }
         guard let touch = activeTouch, touches.contains(touch) else { return }
-
         activeTouch = nil
+        guard gameManager.gameState == .playing else { return }
         finalizeSelection()
     }
 
@@ -212,6 +209,10 @@ class GameScene: SKScene {
         selectedNodes.append(node)
         applyHighlight(node, selected: true)
         updateRunningTotalLabel()
+
+        if gameManager.checkMidSelectionTotal(selectedNodes) {
+            triggerGameOverFromSelection()
+        }
     }
 
     private func finalizeSelection() {
@@ -239,6 +240,21 @@ class GameScene: SKScene {
             }
         case .invalid:
             resumeAndUnhighlight(captured)
+        }
+    }
+
+    // Called when total exceeds 7 mid-drag; cancels the touch, animates the chain,
+    // and schedules the game over overlay without waiting for finger lift.
+    private func triggerGameOverFromSelection() {
+        lineNode?.removeFromParent()
+        lineNode = nil
+        runningTotalLabel?.text = ""
+        activeTouch = nil
+        let captured = selectedNodes
+        selectedNodes.removeAll()
+        animateFailure(captured)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.showGameOver()
         }
     }
 

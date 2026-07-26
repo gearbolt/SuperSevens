@@ -88,4 +88,36 @@ final class GameManagerTests: XCTestCase {
         XCTAssertFalse(result)
         XCTAssertEqual(manager.gameState, .gameOver)
     }
+
+    func testIsNewHighScoreIsFalseWhenScoreIsZero() {
+        let manager = GameManager()
+
+        _ = manager.validateCombination([
+            MockNode.number(4),
+            MockNode.number(4)
+        ])
+
+        XCTAssertEqual(manager.gameState, .gameOver)
+        XCTAssertFalse(manager.isNewHighScore)
+    }
+
+    func testResetClearsIsNewHighScore() {
+        let manager = GameManager()
+        _ = manager.validateCombination([MockNode.number(4), MockNode.number(4)])
+
+        manager.reset()
+
+        XCTAssertFalse(manager.isNewHighScore)
+        XCTAssertEqual(manager.gameState, .playing)
+    }
+
+    func testHighScoreIsLoadedFromUserDefaults() {
+        let key = "superSevens_highScore"
+        UserDefaults.standard.set(999, forKey: key)
+        defer { UserDefaults.standard.removeObject(forKey: key) }
+
+        let manager = GameManager()
+
+        XCTAssertEqual(manager.highScore, 999)
+    }
 }
