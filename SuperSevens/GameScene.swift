@@ -381,7 +381,6 @@ class GameScene: SKScene {
                 return
             }
             // Scale fall duration proportionally to remaining travel distance.
-            // totalTravelY = scene height + SpawnerManager.spawnYOffset + |offscreenRemovalY|.
             let totalTravelY = size.height + SpawnerManager.spawnYOffset + abs(SpawnerManager.offscreenRemovalY)
             let duration = max(0.5, (remainingY / totalTravelY) * GameScene.baseFallDuration)
             let moveDown = SKAction.moveTo(y: SpawnerManager.offscreenRemovalY, duration: duration)

@@ -35,7 +35,7 @@ final class SpawnerManager {
     private var lastSpawnTime: TimeInterval?
     private var spawnStartTime: TimeInterval?
     private var isSpawning = false
-    private var nextSpawnedNodeID = 0
+    private var nextSpawnedNodeID: UInt64 = 0
     private var pooledNumberNodes: [Int: [NumberNode]] = [:]
     private var pooledSpecialItemNodes: [SpecialItemType: [SpecialItemNode]] = [:]
 
