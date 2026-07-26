@@ -47,11 +47,12 @@ final class SoundManager {
         playEffect(named: Asset.selectionTick)
     }
 
-    func playCorrectMatch() {
-        playEffect(named: Asset.success)
-        successHaptic.impactOccurred()
-        successHaptic.prepare()
-    }
+func playCorrectMatch() {
+    playEffect(named: Asset.success)
+    guard !isMuted else { return }
+    successHaptic.impactOccurred()
+    successHaptic.prepare()
+}
 
     func playErrorBuzz() {
         playEffect(named: Asset.error)
