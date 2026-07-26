@@ -46,8 +46,7 @@ class GameScene: SKScene {
     private var selectedNodes: [SKNode] = []
     private var lineNode: SKShapeNode?
     private var activeTouch: UITouch?
-    private weak var scoreLabel: SKLabelNode?
-    private weak var runningTotalLabel: SKLabelNode?
+    private weak var hudNode: HUDNode?
     private weak var gameOverNode: SKNode?
     private weak var muteLabel: SKLabelNode?
 
@@ -98,26 +97,9 @@ class GameScene: SKScene {
     // MARK: - HUD
 
     private func setupHUD() {
-        let scoreNode = SKLabelNode(fontNamed: "AvenirNext-Bold")
-        scoreNode.fontSize = 24
-        scoreNode.fontColor = .white
-        scoreNode.horizontalAlignmentMode = .left
-        scoreNode.position = CGPoint(x: 20, y: size.height - 50)
-        scoreNode.zPosition = 10
-        scoreNode.text = "Score: 0"
-        scoreNode.name = "scoreLabel"
-        addChild(scoreNode)
-        scoreLabel = scoreNode
-
-        let totalNode = SKLabelNode(fontNamed: "AvenirNext-Bold")
-        totalNode.fontSize = 22
-        totalNode.fontColor = .yellow
-        totalNode.horizontalAlignmentMode = .center
-        totalNode.position = CGPoint(x: size.width / 2, y: 60)
-        totalNode.zPosition = 10
-        totalNode.name = "runningTotalLabel"
-        addChild(totalNode)
-        runningTotalLabel = totalNode
+        let hud = HUDNode(sceneSize: size)
+        addChild(hud)
+        hudNode = hud
 
         let muteNode = SKLabelNode(fontNamed: "AvenirNext-Bold")
         muteNode.fontSize = 18
@@ -133,19 +115,18 @@ class GameScene: SKScene {
     }
 
     private func updateScoreLabel() {
-        scoreLabel?.text = "Score: \(gameManager.score)"
+        hudNode?.updateScore(gameManager.score)
         updateAccessibilityState()
     }
 
     private func updateRunningTotalLabel() {
         guard !selectedNodes.isEmpty else {
-            runningTotalLabel?.text = ""
+            hudNode?.updateRunningTotal(nil)
             updateAccessibilityState()
             return
         }
         let total = gameManager.evaluate(selectedNodes)
-        runningTotalLabel?.text = "= \(total)"
-        runningTotalLabel?.fontColor = total > 7 ? .red : (total == 7 ? .green : .yellow)
+        hudNode?.updateRunningTotal(total)
         updateAccessibilityState()
     }
 
@@ -295,7 +276,7 @@ class GameScene: SKScene {
 
         lineNode?.removeFromParent()
         lineNode = nil
-        runningTotalLabel?.text = ""
+        hudNode?.updateRunningTotal(nil)
 
         let captured = selectedNodes
         selectedNodes.removeAll()
@@ -324,7 +305,7 @@ class GameScene: SKScene {
     private func triggerGameOverFromSelection() {
         lineNode?.removeFromParent()
         lineNode = nil
-        runningTotalLabel?.text = ""
+        hudNode?.updateRunningTotal(nil)
         activeTouch = nil
         let captured = selectedNodes
         selectedNodes.removeAll()
@@ -367,7 +348,7 @@ class GameScene: SKScene {
     private func clearSelection(resumeNodes: Bool) {
         lineNode?.removeFromParent()
         lineNode = nil
-        runningTotalLabel?.text = ""
+        hudNode?.updateRunningTotal(nil)
         if resumeNodes {
             resumeAndUnhighlight(selectedNodes)
         }
