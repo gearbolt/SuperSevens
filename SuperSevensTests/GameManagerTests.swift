@@ -90,6 +90,10 @@ final class GameManagerTests: XCTestCase {
     }
 
     func testIsNewHighScoreIsFalseWhenGameOverWithZeroScore() {
+        let key = "superSevens_highScore"
+        UserDefaults.standard.removeObject(forKey: key)
+        defer { UserDefaults.standard.removeObject(forKey: key) }
+
         let manager = GameManager()
 
         _ = manager.validateCombination([

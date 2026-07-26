@@ -117,7 +117,7 @@ class GameScene: SKScene {
                 restartGame()
                 return
             case GameOverNode.mainMenuButtonName:
-                goToMainMenu()
+                restartWithTransition()
                 return
             default:
                 candidate = node.parent
@@ -125,7 +125,7 @@ class GameScene: SKScene {
         }
     }
 
-    private func goToMainMenu() {
+    private func restartWithTransition() {
         guard let view else { return }
         let freshScene = GameScene(size: size)
         freshScene.scaleMode = scaleMode

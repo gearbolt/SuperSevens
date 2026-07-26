@@ -61,7 +61,7 @@ final class GameOverNode: SKNode {
         )
 
         addButton(
-            text: "Main Menu",
+            text: "New Game",
             name: Self.mainMenuButtonName,
             position: CGPoint(x: 76, y: -60),
             color: .systemBlue
