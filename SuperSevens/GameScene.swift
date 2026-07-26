@@ -9,6 +9,8 @@ import SpriteKit
 
 @MainActor
 class GameScene: SKScene {
+    private static let minimumTapTargetSize: CGFloat = 44
+
     private var gameManager = GameManager()
     private var spawnerManager: SpawnerManager?
 
@@ -287,9 +289,8 @@ class GameScene: SKScene {
     private func handleMuteToggleTap(at location: CGPoint) -> Bool {
         if let muteLabel {
             var tapArea = muteLabel.frame
-            let minHitSize: CGFloat = 44
-            let expandX = max(0, (minHitSize - tapArea.width) / 2)
-            let expandY = max(0, (minHitSize - tapArea.height) / 2)
+            let expandX = max(0, (Self.minimumTapTargetSize - tapArea.width) / 2)
+            let expandY = max(0, (Self.minimumTapTargetSize - tapArea.height) / 2)
             tapArea = tapArea.insetBy(dx: -expandX, dy: -expandY)
             if tapArea.contains(location) {
                 toggleMuteSetting()

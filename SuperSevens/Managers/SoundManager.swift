@@ -15,13 +15,14 @@ final class SoundManager {
     }
 
     private static let mutedKey = "com.gearbolt.superSevens.audioMuted"
+    private static let defaultMuted = false
 
     private var backgroundPlayer: AVAudioPlayer?
     private var effectPlayers: [String: AVAudioPlayer] = [:]
     private let successHaptic = UIImpactFeedbackGenerator(style: .medium)
     private var shouldPlayBackgroundMusic = false
 
-    private(set) var isMuted: Bool = UserDefaults.standard.bool(forKey: Self.mutedKey) {
+    private(set) var isMuted: Bool = Self.loadMutedPreference() {
         didSet {
             UserDefaults.standard.set(isMuted, forKey: Self.mutedKey)
             if isMuted {
@@ -120,5 +121,12 @@ final class SoundManager {
         [Asset.selectionTick, Asset.success, Asset.error, Asset.spawn].forEach { effectName in
             effectPlayers[effectName] = createPlayer(named: effectName, loops: 0)
         }
+    }
+
+    private static func loadMutedPreference() -> Bool {
+        guard UserDefaults.standard.object(forKey: mutedKey) != nil else {
+            return defaultMuted
+        }
+        return UserDefaults.standard.bool(forKey: mutedKey)
     }
 }
