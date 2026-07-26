@@ -68,7 +68,7 @@ class GameScene: SKScene {
     override func didMove(to view: SKView) {
         super.didMove(to: view)
         setupHUD()
-        configureAccessibility(for: view)
+        updateAccessibilityState()
         if uiTestScenario.isEnabled {
             configureUITestScenario()
             return
@@ -381,8 +381,8 @@ class GameScene: SKScene {
                 return
             }
             // Scale fall duration proportionally to remaining travel distance.
-            // totalTravelY = scene height + spawn offset (80) + |offscreenRemovalY| (120).
-            let totalTravelY = size.height + 80 + abs(SpawnerManager.offscreenRemovalY)
+            // totalTravelY = scene height + spawn offset + |offscreenRemovalY|.
+            let totalTravelY = size.height + SpawnerManager.spawnYOffset + abs(SpawnerManager.offscreenRemovalY)
             let duration = max(0.5, (remainingY / totalTravelY) * GameScene.baseFallDuration)
             let moveDown = SKAction.moveTo(y: SpawnerManager.offscreenRemovalY, duration: duration)
             let cleanup = spawnerManager?.recycleAction(for: node) ?? .removeFromParent()
@@ -455,12 +455,6 @@ class GameScene: SKScene {
             let remove = spawnerManager?.recycleAction(for: node) ?? .removeFromParent()
             node.run(.sequence([redFlash, shake, fadeOut, remove]))
         }
-    }
-
-    private func configureAccessibility(for view: SKView) {
-        view.isAccessibilityElement = true
-        view.accessibilityIdentifier = "gameView"
-        updateAccessibilityState()
     }
 
     private func updateAccessibilityState() {

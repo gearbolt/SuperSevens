@@ -4,6 +4,7 @@ import SpriteKit
 final class SpawnerManager {
     static let spawnNodePrefix = "spawned_"
     static let offscreenRemovalY: CGFloat = -120
+    static let spawnYOffset: CGFloat = 80
 
     weak var scene: SKScene?
     var baseSpawnInterval: TimeInterval {
@@ -30,7 +31,6 @@ final class SpawnerManager {
     private let timeReductionRate: TimeInterval = 0.005
     private let maxScoreReduction: TimeInterval = 0.35
     private let scoreReductionRate: TimeInterval = 0.01
-    private let spawnYOffset: CGFloat = 80
     private var baseSpawnIntervalReciprocal: TimeInterval
     private var lastSpawnTime: TimeInterval?
     private var spawnStartTime: TimeInterval?
@@ -116,7 +116,7 @@ final class SpawnerManager {
         let minX = spawnMargin
         let maxX = scene.size.width - spawnMargin
         let x = CGFloat.random(in: minX...maxX)
-        let y = scene.size.height + spawnYOffset
+        let y = scene.size.height + Self.spawnYOffset
 
         let node: SKNode
         if shouldSpawnSpecial(randomValue: Double.random(in: 0...1)) {
