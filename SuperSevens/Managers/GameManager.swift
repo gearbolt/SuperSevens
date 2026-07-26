@@ -95,9 +95,12 @@ final class GameManager {
             } else if let itemType = node.nodeSpecialItemType {
                 switch itemType {
                 case .star:
-                    total += 7
+                    // Wildcard: sets the running total to exactly 7, regardless of current value.
+                    total = 7
                 case .multiplier:
                     total *= 2
+                case .multiplierThree:
+                    total *= 3
                 case .minusOne:
                     total -= 1
                 case .divisionByTwo:
@@ -146,12 +149,11 @@ final class GameManager {
     }
 
     func score(for nodes: [GameNode]) -> Int {
-        let multiplierCount = nodes
+        let multiplierBonus = nodes
             .compactMap(\.nodeSpecialItemType)
-            .filter { $0 == .multiplier }
-            .count
-        let bonus = multiplierCount > 0 ? multiplierCount * 2 : 1
-        return 100 * nodes.count * bonus
+            .compactMap(\.scoreMultiplier)
+            .reduce(1, *)
+        return 100 * nodes.count * multiplierBonus
     }
 
     private func convertToGameNodes(_ nodes: [SKNode]) -> [GameNode]? {

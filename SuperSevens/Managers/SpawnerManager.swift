@@ -125,7 +125,9 @@ final class SpawnerManager {
 
         let node: SKNode
         if shouldSpawnSpecial(randomValue: Double.random(in: 0...1)) {
-            node = dequeueSpecialItemNode(itemType: SpecialItemType.allCases.randomElement()!)
+            let totalWeight = SpecialItemType.allCases.reduce(0.0) { $0 + $1.spawnWeight }
+            let itemType = weightedRandomSpecialItemType(randomValue: Double.random(in: 0..<totalWeight))
+            node = dequeueSpecialItemNode(itemType: itemType)
         } else {
             node = dequeueNumberNode(value: Int.random(in: NumberNode.validRange))
         }
@@ -143,6 +145,20 @@ final class SpawnerManager {
 
     func shouldSpawnSpecial(randomValue: Double) -> Bool {
         randomValue < specialSpawnProbability
+    }
+
+    /// Selects a `SpecialItemType` using weighted probabilities based on each type's `spawnWeight`.
+    /// - Parameter randomValue: A value in `[0, totalWeight)` used to make the selection deterministic in tests.
+    func weightedRandomSpecialItemType(randomValue: Double) -> SpecialItemType {
+        let types = SpecialItemType.allCases
+        var cumulative = 0.0
+        for itemType in types {
+            cumulative += itemType.spawnWeight
+            if randomValue < cumulative {
+                return itemType
+            }
+        }
+        return types.last!
     }
 
     func dequeueNumberNode(value: Int) -> NumberNode {
