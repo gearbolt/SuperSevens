@@ -1,5 +1,6 @@
 import SpriteKit
 
+@MainActor
 final class SpawnerManager {
     static let spawnNodePrefix = "spawned_"
     static let offscreenRemovalY: CGFloat = -120

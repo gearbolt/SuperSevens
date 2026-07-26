@@ -7,6 +7,7 @@
 
 import SpriteKit
 
+@MainActor
 class GameScene: SKScene {
     private var gameManager = GameManager()
     private var spawnerManager: SpawnerManager?
@@ -284,14 +285,11 @@ class GameScene: SKScene {
     }
 
     private func handleMuteToggleTap(at location: CGPoint) -> Bool {
-        var candidate: SKNode? = atPoint(location)
-        while let node = candidate {
-            if node.name == "muteToggleLabel" {
-                _ = SoundManager.shared.toggleMute()
-                updateMuteLabel()
-                return true
-            }
-            candidate = node.parent
+        let touchedNode = atPoint(location)
+        if touchedNode.name == "muteToggleLabel" {
+            _ = SoundManager.shared.toggleMute()
+            updateMuteLabel()
+            return true
         }
         return false
     }

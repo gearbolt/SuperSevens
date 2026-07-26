@@ -1,6 +1,7 @@
 import AVFoundation
 import UIKit
 
+@MainActor
 final class SoundManager {
     static let shared = SoundManager()
 
@@ -32,6 +33,7 @@ final class SoundManager {
     }
 
     private init() {
+        preloadAssets()
         successHaptic.prepare()
     }
 
@@ -95,5 +97,12 @@ final class SoundManager {
         player.numberOfLoops = loops
         player.prepareToPlay()
         return player
+    }
+
+    private func preloadAssets() {
+        backgroundPlayer = createPlayer(named: Asset.backgroundTrack, loops: -1)
+        [Asset.selectionTick, Asset.success, Asset.error, Asset.spawn].forEach { effectName in
+            effectPlayers[effectName] = createPlayer(named: effectName, loops: 0)
+        }
     }
 }
