@@ -89,7 +89,7 @@ final class GameManagerTests: XCTestCase {
         XCTAssertEqual(manager.gameState, .gameOver)
     }
 
-    func testIsNewHighScoreIsFalseWhenScoreIsZero() {
+    func testIsNewHighScoreIsFalseWhenGameOverWithZeroScore() {
         let manager = GameManager()
 
         _ = manager.validateCombination([
