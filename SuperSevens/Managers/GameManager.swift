@@ -27,8 +27,16 @@ extension SpecialItemNode: GameNode {
 }
 
 final class GameManager {
+    private static let highScoreKey = "superSevens_highScore"
+
     private(set) var score: Int = 0
     private(set) var gameState: GameState = .playing
+    private(set) var highScore: Int
+    private(set) var isNewHighScore: Bool = false
+
+    init() {
+        highScore = UserDefaults.standard.integer(forKey: Self.highScoreKey)
+    }
 
     // Evaluates the chain left-to-right and returns the running total.
     // NumberNode values are summed; SpecialItemNodes apply their modifier.
@@ -37,7 +45,7 @@ final class GameManager {
         evaluateChain(nodes, haltOnExceed: haltOnExceed).total
     }
 
-func evaluate(_ nodes: [SKNode]) -> Int {
+    func evaluate(_ nodes: [SKNode]) -> Int {
         guard let gameNodes = convertToGameNodes(nodes) else { return 0 }
         return evaluate(gameNodes, haltOnExceed: true)
     }
@@ -49,10 +57,24 @@ func evaluate(_ nodes: [SKNode]) -> Int {
         guard !nodes.isEmpty else { return false }
         let evaluation = evaluateChain(nodes, haltOnExceed: true)
         if evaluation.exceeded {
-            gameState = .gameOver
+            setGameOver()
             return false
         }
         return evaluation.total == 7
+    }
+
+    // Checks the running total of the given nodes mid-selection.
+    // If the total exceeds 7, transitions to .gameOver immediately and returns true.
+    @discardableResult
+    func checkMidSelectionTotal(_ nodes: [SKNode]) -> Bool {
+        guard gameState == .playing, !nodes.isEmpty else { return false }
+        guard let gameNodes = convertToGameNodes(nodes) else { return false }
+        let result = evaluateChain(gameNodes, haltOnExceed: true)
+        if result.exceeded {
+            setGameOver()
+            return true
+        }
+        return false
     }
 
     private func evaluateChain(_ nodes: [GameNode], haltOnExceed: Bool) -> (total: Int, exceeded: Bool) {
@@ -111,6 +133,16 @@ func evaluate(_ nodes: [SKNode]) -> Int {
     func reset() {
         score = 0
         gameState = .playing
+        isNewHighScore = false
+    }
+
+    private func setGameOver() {
+        isNewHighScore = score > highScore
+        if isNewHighScore {
+            highScore = score
+            UserDefaults.standard.set(highScore, forKey: Self.highScoreKey)
+        }
+        gameState = .gameOver
     }
 
     private func scoreForChain(_ nodes: [GameNode]) -> Int {
