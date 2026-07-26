@@ -31,6 +31,12 @@ class GameScene: SKScene {
         }
     }
 
+    private enum AccessibilityValueFormatter {
+        static func value(stateDescription: String, score: Int, selectionCount: Int, runningTotal: String) -> String {
+            "state=\(stateDescription); score=\(score); selection=\(selectionCount); total=\(runningTotal)"
+        }
+    }
+
     private static let minimumTapTargetSize: CGFloat = 44
 
     private var gameManager = GameManager()
@@ -381,7 +387,7 @@ class GameScene: SKScene {
                 return
             }
             // Scale fall duration proportionally to remaining travel distance.
-            let totalTravelY = size.height + SpawnerManager.spawnYOffset + abs(SpawnerManager.offscreenRemovalY)
+            let totalTravelY = SpawnerManager.totalTravelDistance(forSceneHeight: size.height)
             let duration = max(0.5, (remainingY / totalTravelY) * GameScene.baseFallDuration)
             let moveDown = SKAction.moveTo(y: SpawnerManager.offscreenRemovalY, duration: duration)
             let cleanup = spawnerManager?.recycleAction(for: node) ?? .removeFromParent()
@@ -459,7 +465,12 @@ class GameScene: SKScene {
     private func updateAccessibilityState() {
         let stateDescription = gameManager.gameState == .playing ? "playing" : "gameOver"
         let runningTotal = selectedNodes.isEmpty ? "none" : String(gameManager.evaluate(selectedNodes))
-        view?.accessibilityValue = "state=\(stateDescription); score=\(gameManager.score); selection=\(selectedNodes.count); total=\(runningTotal)"
+        view?.accessibilityValue = AccessibilityValueFormatter.value(
+            stateDescription: stateDescription,
+            score: gameManager.score,
+            selectionCount: selectedNodes.count,
+            runningTotal: runningTotal
+        )
     }
 
     private func configureUITestScenario() {

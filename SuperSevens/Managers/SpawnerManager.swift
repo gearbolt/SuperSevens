@@ -6,6 +6,10 @@ final class SpawnerManager {
     static let offscreenRemovalY: CGFloat = -120
     static let spawnYOffset: CGFloat = 80
 
+    static func totalTravelDistance(forSceneHeight sceneHeight: CGFloat) -> CGFloat {
+        sceneHeight + spawnYOffset + abs(offscreenRemovalY)
+    }
+
     weak var scene: SKScene?
     var baseSpawnInterval: TimeInterval {
         didSet {
