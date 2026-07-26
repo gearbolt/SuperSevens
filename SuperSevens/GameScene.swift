@@ -460,7 +460,7 @@ class GameScene: SKScene {
     private func updateAccessibilityState() {
         let stateDescription = gameManager.gameState == .playing ? "playing" : "gameOver"
         let runningTotal = selectedNodes.isEmpty ? "none" : String(gameManager.evaluate(selectedNodes))
-        view?.accessibilityValue = "state=\(stateDescription);score=\(gameManager.score);selection=\(selectedNodes.count);total=\(runningTotal)"
+        view?.accessibilityValue = "state=\(stateDescription); score=\(gameManager.score); selection=\(selectedNodes.count); total=\(runningTotal)"
     }
 
     private func configureUITestScenario() {
