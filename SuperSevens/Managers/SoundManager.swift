@@ -20,7 +20,7 @@ final class SoundManager {
     private let successHaptic = UIImpactFeedbackGenerator(style: .medium)
     private var shouldPlayBackgroundMusic = false
 
-    private(set) var isMuted: Bool {
+    private(set) var isMuted: Bool = UserDefaults.standard.bool(forKey: Self.mutedKey) {
         didSet {
             UserDefaults.standard.set(isMuted, forKey: Self.mutedKey)
             if isMuted {
@@ -32,7 +32,6 @@ final class SoundManager {
     }
 
     private init() {
-        isMuted = UserDefaults.standard.bool(forKey: Self.mutedKey)
         successHaptic.prepare()
     }
 

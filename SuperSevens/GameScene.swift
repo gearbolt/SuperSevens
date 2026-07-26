@@ -297,7 +297,7 @@ class GameScene: SKScene {
     }
 
     private func updateMuteLabel() {
-        muteLabel?.text = SoundManager.shared.isMuted ? "🔇 Mute" : "🔊 Sound"
+        muteLabel?.text = SoundManager.shared.isMuted ? "🔇 Sound Off" : "🔊 Sound On"
     }
 
     private func clearSelection(resumeNodes: Bool) {
