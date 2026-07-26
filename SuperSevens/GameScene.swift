@@ -7,7 +7,10 @@
 
 import SpriteKit
 
+@MainActor
 class GameScene: SKScene {
+    private static let minimumTapTargetSize: CGFloat = 44
+
     private var gameManager = GameManager()
     private var spawnerManager: SpawnerManager?
 
@@ -17,6 +20,7 @@ class GameScene: SKScene {
     private weak var scoreLabel: SKLabelNode?
     private weak var runningTotalLabel: SKLabelNode?
     private weak var gameOverNode: SKNode?
+    private weak var muteLabel: SKLabelNode?
 
     // Approximate total travel distance for spawned nodes (scene height + spawn
     // offset above screen + removal threshold below). Used to proportionally
@@ -41,12 +45,14 @@ class GameScene: SKScene {
     override func didMove(to view: SKView) {
         super.didMove(to: view)
         setupHUD()
+        SoundManager.shared.playBackgroundMusic()
         spawnerManager?.startSpawning()
     }
 
     override func willMove(from view: SKView) {
         super.willMove(from: view)
         spawnerManager?.stopSpawning()
+        SoundManager.shared.stopBackgroundMusic()
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -78,6 +84,17 @@ class GameScene: SKScene {
         totalNode.name = "runningTotalLabel"
         addChild(totalNode)
         runningTotalLabel = totalNode
+
+        let muteNode = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        muteNode.fontSize = 18
+        muteNode.fontColor = .white
+        muteNode.horizontalAlignmentMode = .right
+        muteNode.position = CGPoint(x: size.width - 20, y: size.height - 50)
+        muteNode.zPosition = 10
+        muteNode.name = "muteToggleLabel"
+        addChild(muteNode)
+        muteLabel = muteNode
+        updateMuteLabel()
     }
 
     private func updateScoreLabel() {
@@ -98,6 +115,7 @@ class GameScene: SKScene {
 
     private func showGameOver() {
         spawnerManager?.stopSpawning()
+        SoundManager.shared.stopBackgroundMusic()
         let overlay = GameOverNode(
             score: gameManager.score,
             highScore: gameManager.highScore,
@@ -144,6 +162,7 @@ class GameScene: SKScene {
             .forEach { $0.removeFromParent() }
         gameManager.reset()
         updateScoreLabel()
+        SoundManager.shared.playBackgroundMusic()
         spawnerManager?.startSpawning()
     }
 
@@ -152,6 +171,10 @@ class GameScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
+
+        if handleMuteToggleTap(at: location) {
+            return
+        }
 
         if gameManager.gameState == .gameOver {
             handleGameOverTap(at: location)
@@ -208,6 +231,7 @@ class GameScene: SKScene {
         node.removeAllActions()
         selectedNodes.append(node)
         applyHighlight(node, selected: true)
+        SoundManager.shared.playSelectionTick()
         updateRunningTotalLabel()
 
         if gameManager.checkMidSelectionTotal(selectedNodes) {
@@ -231,14 +255,17 @@ class GameScene: SKScene {
         let result = gameManager.submitCombination(captured)
         switch result {
         case .success:
+            SoundManager.shared.playCorrectMatch()
             animateSuccess(captured)
             updateScoreLabel()
         case .exceeded:
+            SoundManager.shared.playErrorBuzz()
             animateFailure(captured)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.showGameOver()
             }
         case .invalid:
+            SoundManager.shared.playErrorBuzz()
             resumeAndUnhighlight(captured)
         }
     }
@@ -252,10 +279,40 @@ class GameScene: SKScene {
         activeTouch = nil
         let captured = selectedNodes
         selectedNodes.removeAll()
+        SoundManager.shared.playErrorBuzz()
         animateFailure(captured)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.showGameOver()
         }
+    }
+
+    private func handleMuteToggleTap(at location: CGPoint) -> Bool {
+        if let muteLabel {
+            var tapArea = muteLabel.frame
+            let expandX = max(0, (Self.minimumTapTargetSize - tapArea.width) / 2)
+            let expandY = max(0, (Self.minimumTapTargetSize - tapArea.height) / 2)
+            tapArea = CGRect(
+                x: tapArea.minX - expandX,
+                y: tapArea.minY - expandY,
+                width: tapArea.width + (expandX * 2),
+                height: tapArea.height + (expandY * 2)
+            )
+            if tapArea.contains(location) {
+                toggleMuteSetting()
+                return true
+            }
+        }
+        return false
+    }
+
+    private func toggleMuteSetting() {
+        let isMuted = SoundManager.shared.toggleMute()
+        updateMuteLabel(isMuted: isMuted)
+    }
+
+    private func updateMuteLabel(isMuted: Bool? = nil) {
+        let currentMuteState = isMuted ?? SoundManager.shared.isMuted
+        muteLabel?.text = currentMuteState ? "🔇 Sound Off" : "🔊 Sound On"
     }
 
     private func clearSelection(resumeNodes: Bool) {

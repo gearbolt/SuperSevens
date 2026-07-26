@@ -1,5 +1,6 @@
 import SpriteKit
 
+@MainActor
 final class SpawnerManager {
     static let spawnNodePrefix = "spawned_"
     static let offscreenRemovalY: CGFloat = -120
@@ -133,6 +134,7 @@ final class SpawnerManager {
         node.name = "\(Self.spawnNodePrefix)\(UUID().uuidString)"
         node.position = CGPoint(x: x, y: y)
         scene.addChild(node)
+        SoundManager.shared.playNodeSpawn()
 
         let speedScale = max(minimumSpeedScale, interval * baseSpawnIntervalReciprocal)
         let duration = baseFallDuration * speedScale
