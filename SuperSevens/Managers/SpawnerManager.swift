@@ -166,14 +166,15 @@ final class SpawnerManager {
         guard let node else { return false }
         guard node.name?.hasPrefix(Self.spawnNodePrefix) == true else { return false }
 
-        node.removeAllActions()
-        node.removeFromParent()
-
         switch node {
         case let numberNode as NumberNode:
+            numberNode.removeAllActions()
+            numberNode.removeFromParent()
             pooledNumberNodes[numberNode.value, default: []].append(numberNode)
             return true
         case let specialNode as SpecialItemNode:
+            specialNode.removeAllActions()
+            specialNode.removeFromParent()
             pooledSpecialItemNodes[specialNode.itemType, default: []].append(specialNode)
             return true
         default:
