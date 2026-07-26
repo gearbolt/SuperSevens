@@ -133,6 +133,7 @@ final class SpawnerManager {
         node.name = "\(Self.spawnNodePrefix)\(UUID().uuidString)"
         node.position = CGPoint(x: x, y: y)
         scene.addChild(node)
+        SoundManager.shared.playNodeSpawn()
 
         let speedScale = max(minimumSpeedScale, interval * baseSpawnIntervalReciprocal)
         let duration = baseFallDuration * speedScale

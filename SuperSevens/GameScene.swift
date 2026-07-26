@@ -17,6 +17,7 @@ class GameScene: SKScene {
     private weak var scoreLabel: SKLabelNode?
     private weak var runningTotalLabel: SKLabelNode?
     private weak var gameOverNode: SKNode?
+    private weak var muteLabel: SKLabelNode?
 
     // Approximate total travel distance for spawned nodes (scene height + spawn
     // offset above screen + removal threshold below). Used to proportionally
@@ -41,12 +42,14 @@ class GameScene: SKScene {
     override func didMove(to view: SKView) {
         super.didMove(to: view)
         setupHUD()
+        SoundManager.shared.playBackgroundMusic()
         spawnerManager?.startSpawning()
     }
 
     override func willMove(from view: SKView) {
         super.willMove(from: view)
         spawnerManager?.stopSpawning()
+        SoundManager.shared.stopBackgroundMusic()
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -78,6 +81,17 @@ class GameScene: SKScene {
         totalNode.name = "runningTotalLabel"
         addChild(totalNode)
         runningTotalLabel = totalNode
+
+        let muteNode = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        muteNode.fontSize = 18
+        muteNode.fontColor = .white
+        muteNode.horizontalAlignmentMode = .right
+        muteNode.position = CGPoint(x: size.width - 20, y: size.height - 50)
+        muteNode.zPosition = 10
+        muteNode.name = "muteToggleLabel"
+        addChild(muteNode)
+        muteLabel = muteNode
+        updateMuteLabel()
     }
 
     private func updateScoreLabel() {
@@ -98,6 +112,7 @@ class GameScene: SKScene {
 
     private func showGameOver() {
         spawnerManager?.stopSpawning()
+        SoundManager.shared.stopBackgroundMusic()
         let overlay = GameOverNode(
             score: gameManager.score,
             highScore: gameManager.highScore,
@@ -144,6 +159,7 @@ class GameScene: SKScene {
             .forEach { $0.removeFromParent() }
         gameManager.reset()
         updateScoreLabel()
+        SoundManager.shared.playBackgroundMusic()
         spawnerManager?.startSpawning()
     }
 
@@ -152,6 +168,10 @@ class GameScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
+
+        if handleMuteToggleTap(at: location) {
+            return
+        }
 
         if gameManager.gameState == .gameOver {
             handleGameOverTap(at: location)
@@ -208,6 +228,7 @@ class GameScene: SKScene {
         node.removeAllActions()
         selectedNodes.append(node)
         applyHighlight(node, selected: true)
+        SoundManager.shared.playSelectionTick()
         updateRunningTotalLabel()
 
         if gameManager.checkMidSelectionTotal(selectedNodes) {
@@ -231,14 +252,17 @@ class GameScene: SKScene {
         let result = gameManager.submitCombination(captured)
         switch result {
         case .success:
+            SoundManager.shared.playCorrectMatch()
             animateSuccess(captured)
             updateScoreLabel()
         case .exceeded:
+            SoundManager.shared.playErrorBuzz()
             animateFailure(captured)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
                 self?.showGameOver()
             }
         case .invalid:
+            SoundManager.shared.playErrorBuzz()
             resumeAndUnhighlight(captured)
         }
     }
@@ -252,10 +276,28 @@ class GameScene: SKScene {
         activeTouch = nil
         let captured = selectedNodes
         selectedNodes.removeAll()
+        SoundManager.shared.playErrorBuzz()
         animateFailure(captured)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.showGameOver()
         }
+    }
+
+    private func handleMuteToggleTap(at location: CGPoint) -> Bool {
+        var candidate: SKNode? = atPoint(location)
+        while let node = candidate {
+            if node.name == "muteToggleLabel" {
+                _ = SoundManager.shared.toggleMute()
+                updateMuteLabel()
+                return true
+            }
+            candidate = node.parent
+        }
+        return false
+    }
+
+    private func updateMuteLabel() {
+        muteLabel?.text = SoundManager.shared.isMuted ? "🔇 Mute" : "🔊 Sound"
     }
 
     private func clearSelection(resumeNodes: Bool) {
