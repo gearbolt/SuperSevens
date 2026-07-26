@@ -30,10 +30,6 @@ final class NumberNode: SKShapeNode {
     }
 
     func prepareForReuse() {
-        alpha = 1
-        xScale = 1
-        yScale = 1
-        zRotation = 0
         fillColor = .systemBlue
         strokeColor = .white
         lineWidth = 2

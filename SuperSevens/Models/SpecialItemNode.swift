@@ -65,10 +65,6 @@ final class SpecialItemNode: SKShapeNode {
     }
 
     func prepareForReuse() {
-        alpha = 1
-        xScale = 1
-        yScale = 1
-        zRotation = 0
         fillColor = itemType.color
         strokeColor = .white
         lineWidth = 2

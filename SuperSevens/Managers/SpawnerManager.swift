@@ -167,11 +167,9 @@ final class SpawnerManager {
 
         switch node {
         case let numberNode as NumberNode:
-            numberNode.prepareForReuse()
             pooledNumberNodes[numberNode.value, default: []].append(numberNode)
             return true
         case let specialNode as SpecialItemNode:
-            specialNode.prepareForReuse()
             pooledSpecialItemNodes[specialNode.itemType, default: []].append(specialNode)
             return true
         default:
@@ -189,7 +187,7 @@ final class SpawnerManager {
         }
     }
 
-    private func prepareSpawnedNode(_ node: SKNode, position: CGPoint) {
+    func prepareSpawnedNode(_ node: SKNode, position: CGPoint) {
         node.removeAllActions()
         node.alpha = 1
         node.xScale = 1
