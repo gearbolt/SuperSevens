@@ -19,6 +19,7 @@ final class SoundManager {
     private var backgroundPlayer: AVAudioPlayer?
     private var effectPlayers: [String: AVAudioPlayer] = [:]
     private let successHaptic = UIImpactFeedbackGenerator(style: .medium)
+    private let toggleHaptic = UIImpactFeedbackGenerator(style: .light)
     private var shouldPlayBackgroundMusic = false
 
     private(set) var isMuted: Bool = UserDefaults.standard.bool(forKey: Self.mutedKey) {
@@ -35,10 +36,13 @@ final class SoundManager {
     private init() {
         preloadAssets()
         successHaptic.prepare()
+        toggleHaptic.prepare()
     }
 
     func toggleMute() -> Bool {
         isMuted.toggle()
+        toggleHaptic.impactOccurred()
+        toggleHaptic.prepare()
         return isMuted
     }
 

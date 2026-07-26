@@ -285,6 +285,19 @@ class GameScene: SKScene {
     }
 
     private func handleMuteToggleTap(at location: CGPoint) -> Bool {
+        if let muteLabel {
+            var tapArea = muteLabel.frame
+            let minHitSize: CGFloat = 44
+            let expandX = max(0, (minHitSize - tapArea.width) / 2)
+            let expandY = max(0, (minHitSize - tapArea.height) / 2)
+            tapArea = tapArea.insetBy(dx: -expandX, dy: -expandY)
+            if tapArea.contains(location) {
+                _ = SoundManager.shared.toggleMute()
+                updateMuteLabel()
+                return true
+            }
+        }
+
         let touchedNode = atPoint(location)
         if touchedNode.name == "muteToggleLabel" {
             _ = SoundManager.shared.toggleMute()
