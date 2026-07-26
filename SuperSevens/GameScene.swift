@@ -483,7 +483,11 @@ class GameScene: SKScene {
     }
 
     private func addUITestSpawnedNumber(value: Int, normalizedX: CGFloat) {
-        let node = spawnerManager?.dequeueNumberNode(value: value) ?? NumberNode(value: value)
+        guard let spawnerManager else {
+            assertionFailure("SpawnerManager must exist before configuring UI test nodes.")
+            return
+        }
+        let node = spawnerManager.dequeueNumberNode(value: value)
         node.name = SpawnerManager.spawnNodePrefix
         node.position = CGPoint(x: size.width * normalizedX, y: size.height * 0.55)
         addChild(node)

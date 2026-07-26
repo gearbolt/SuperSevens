@@ -35,6 +35,7 @@ final class SpawnerManager {
     private var lastSpawnTime: TimeInterval?
     private var spawnStartTime: TimeInterval?
     private var isSpawning = false
+    private var nextSpawnedNodeID = 0
     private var pooledNumberNodes: [Int: [NumberNode]] = [:]
     private var pooledSpecialItemNodes: [SpecialItemType: [SpecialItemNode]] = [:]
 
@@ -194,8 +195,13 @@ final class SpawnerManager {
         node.xScale = 1
         node.yScale = 1
         node.zRotation = 0
-        node.name = Self.spawnNodePrefix
+        node.name = nextSpawnNodeName()
         node.position = position
+    }
+
+    private func nextSpawnNodeName() -> String {
+        defer { nextSpawnedNodeID += 1 }
+        return "\(Self.spawnNodePrefix)\(nextSpawnedNodeID)"
     }
 
     private static func validate(baseSpawnInterval: TimeInterval, minimumSpawnInterval: TimeInterval) {
