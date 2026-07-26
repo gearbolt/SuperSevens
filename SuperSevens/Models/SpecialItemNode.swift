@@ -2,6 +2,7 @@ import SpriteKit
 
 enum SpecialItemType: CaseIterable, Hashable {
     case multiplier
+    case multiplierThree
     case star
     case heptagon
     case minusOne
@@ -11,6 +12,8 @@ enum SpecialItemType: CaseIterable, Hashable {
         switch self {
         case .multiplier:
             return "×2"
+        case .multiplierThree:
+            return "×3"
         case .star:
             return "★"
         case .heptagon:
@@ -26,6 +29,8 @@ enum SpecialItemType: CaseIterable, Hashable {
         switch self {
         case .multiplier:
             return .systemOrange
+        case .multiplierThree:
+            return .brown
         case .star:
             return .systemYellow
         case .heptagon:
@@ -34,6 +39,37 @@ enum SpecialItemType: CaseIterable, Hashable {
             return .systemRed
         case .divisionByTwo:
             return .systemGreen
+        }
+    }
+
+    /// Relative spawn weight used for rarity-based selection.
+    /// Higher values spawn more frequently; lower values are rarer.
+    var spawnWeight: Double {
+        switch self {
+        case .multiplier:
+            return 3
+        case .multiplierThree:
+            return 1
+        case .star:
+            return 1
+        case .heptagon:
+            return 2
+        case .minusOne:
+            return 3
+        case .divisionByTwo:
+            return 2
+        }
+    }
+
+    /// The score multiplier contributed by this item, or nil if not a multiplier type.
+    var scoreMultiplier: Int? {
+        switch self {
+        case .multiplier:
+            return 2
+        case .multiplierThree:
+            return 3
+        default:
+            return nil
         }
     }
 }

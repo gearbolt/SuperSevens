@@ -52,4 +52,25 @@ final class SpawnerManagerTests: XCTestCase {
         XCTAssertEqual(reusedNode.xScale, 1)
         XCTAssertEqual(reusedNode.yScale, 1)
     }
+
+    func testWeightedRandomSpecialItemTypeReturnsCorrectTypeForKnownRanges() {
+        let scene = SKScene(size: CGSize(width: 390, height: 844))
+        let manager = SpawnerManager(scene: scene)
+
+        // Weights: multiplier=3, multiplierThree=1, star=1, heptagon=2, minusOne=3, divisionByTwo=2
+        // Total weight = 12. Cumulative ranges (matching enum order):
+        // .multiplier:     [0,  3)
+        // .multiplierThree:[3,  4)
+        // .star:           [4,  5)
+        // .heptagon:       [5,  7)
+        // .minusOne:       [7, 10)
+        // .divisionByTwo: [10, 12)
+        XCTAssertEqual(manager.weightedRandomSpecialItemType(randomValue: 0.0), .multiplier)
+        XCTAssertEqual(manager.weightedRandomSpecialItemType(randomValue: 2.9), .multiplier)
+        XCTAssertEqual(manager.weightedRandomSpecialItemType(randomValue: 3.0), .multiplierThree)
+        XCTAssertEqual(manager.weightedRandomSpecialItemType(randomValue: 4.0), .star)
+        XCTAssertEqual(manager.weightedRandomSpecialItemType(randomValue: 5.0), .heptagon)
+        XCTAssertEqual(manager.weightedRandomSpecialItemType(randomValue: 7.0), .minusOne)
+        XCTAssertEqual(manager.weightedRandomSpecialItemType(randomValue: 10.0), .divisionByTwo)
+    }
 }

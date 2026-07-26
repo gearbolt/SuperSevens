@@ -40,10 +40,35 @@ final class GameManagerTests: XCTestCase {
         XCTAssertTrue(result)
     }
 
+    func testValidateCombinationSupportsMultiplierThree() {
+        let manager = GameManager()
+
+        // 1 × 3 + 4 = 7
+        let result = manager.validateCombination([
+            MockNode.number(1),
+            MockNode.item(.multiplierThree),
+            MockNode.number(4)
+        ])
+
+        XCTAssertTrue(result)
+    }
+
     func testValidateCombinationSupportsStar() {
         let manager = GameManager()
 
         let result = manager.validateCombination([
+            MockNode.item(.star)
+        ])
+
+        XCTAssertTrue(result)
+    }
+
+    func testValidateCombinationSupportsStarAsWildcard() {
+        let manager = GameManager()
+
+        // Star acts as a wildcard, setting the total to exactly 7.
+        let result = manager.validateCombination([
+            MockNode.number(3),
             MockNode.item(.star)
         ])
 
@@ -171,6 +196,19 @@ final class GameManagerTests: XCTestCase {
         ])
 
         XCTAssertEqual(score, 2_000)
+    }
+
+    func testScoreCalculationAppliesMultiplierThreeBonus() {
+        let manager = GameManager()
+
+        // 3 nodes × ×3 bonus = 100 × 3 × 3 = 900
+        let score = manager.score(for: [
+            MockNode.number(1),
+            MockNode.item(.multiplierThree),
+            MockNode.number(6)
+        ])
+
+        XCTAssertEqual(score, 900)
     }
 
     func testSubmitCombinationAwardsCalculatedScore() {
