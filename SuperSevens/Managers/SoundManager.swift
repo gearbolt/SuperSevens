@@ -14,7 +14,7 @@ final class SoundManager {
         static let spawn = "node_spawn"
     }
 
-    private static let mutedKey = "superSevens_audioMuted"
+    private static let mutedKey = "com.gearbolt.superSevens.audioMuted"
 
     private var backgroundPlayer: AVAudioPlayer?
     private var effectPlayers: [String: AVAudioPlayer] = [:]
@@ -77,18 +77,32 @@ final class SoundManager {
 
     private func playEffect(named name: String) {
         guard !isMuted else { return }
-        let player = effectPlayers[name] ?? createPlayer(named: name, loops: 0)
-        effectPlayers[name] = player
-        player?.currentTime = 0
-        player?.play()
+        let player: AVAudioPlayer
+        if let cachedPlayer = effectPlayers[name] {
+            player = cachedPlayer
+        } else if let createdPlayer = createPlayer(named: name, loops: 0) {
+            effectPlayers[name] = createdPlayer
+            player = createdPlayer
+        } else {
+            return
+        }
+        player.currentTime = 0
+        player.play()
     }
 
     private func startBackgroundPlayback() {
-        let player = backgroundPlayer ?? createPlayer(named: Asset.backgroundTrack, loops: -1)
-        backgroundPlayer = player
-        guard player?.isPlaying == false else { return }
-        player?.currentTime = 0
-        player?.play()
+        let player: AVAudioPlayer
+        if let cachedPlayer = backgroundPlayer {
+            player = cachedPlayer
+        } else if let createdPlayer = createPlayer(named: Asset.backgroundTrack, loops: -1) {
+            backgroundPlayer = createdPlayer
+            player = createdPlayer
+        } else {
+            return
+        }
+        guard !player.isPlaying else { return }
+        player.currentTime = 0
+        player.play()
     }
 
     private func createPlayer(named name: String, loops: Int) -> AVAudioPlayer? {
