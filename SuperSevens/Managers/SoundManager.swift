@@ -18,7 +18,7 @@ final class SoundManager {
     private static let defaultMuted = false
 
     private var backgroundPlayer: AVAudioPlayer?
-    private var effectPlayers: [String: AVAudioPlayer] = [:]
+    private var effectPlayerPools: [String: [AVAudioPlayer]] = [:]
     private let successHaptic = UIImpactFeedbackGenerator(style: .medium)
     private var shouldPlayBackgroundMusic = false
 
@@ -75,10 +75,12 @@ final class SoundManager {
     private func playEffect(named name: String) {
         guard !isMuted else { return }
         let player: AVAudioPlayer
-        if let cachedPlayer = effectPlayers[name] {
-            player = cachedPlayer
+        if let availablePlayer = effectPlayerPools[name]?.first(where: { !$0.isPlaying }) {
+            player = availablePlayer
+        } else if let fallbackPlayer = effectPlayerPools[name]?.first {
+            player = fallbackPlayer
         } else if let createdPlayer = createPlayer(named: name, loops: 0) {
-            effectPlayers[name] = createdPlayer
+            effectPlayerPools[name] = [createdPlayer]
             player = createdPlayer
         } else {
             return
@@ -119,7 +121,9 @@ final class SoundManager {
     private func preloadAssets() {
         backgroundPlayer = createPlayer(named: Asset.backgroundTrack, loops: -1)
         [Asset.selectionTick, Asset.success, Asset.error, Asset.spawn].forEach { effectName in
-            effectPlayers[effectName] = createPlayer(named: effectName, loops: 0)
+            effectPlayerPools[effectName] = (0..<3).compactMap { _ in
+                createPlayer(named: effectName, loops: 0)
+            }
         }
     }
 

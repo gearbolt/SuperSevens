@@ -291,7 +291,12 @@ class GameScene: SKScene {
             var tapArea = muteLabel.frame
             let expandX = max(0, (Self.minimumTapTargetSize - tapArea.width) / 2)
             let expandY = max(0, (Self.minimumTapTargetSize - tapArea.height) / 2)
-            tapArea = tapArea.insetBy(dx: -expandX, dy: -expandY)
+            tapArea = CGRect(
+                x: tapArea.minX - expandX,
+                y: tapArea.minY - expandY,
+                width: tapArea.width + (expandX * 2),
+                height: tapArea.height + (expandY * 2)
+            )
             if tapArea.contains(location) {
                 toggleMuteSetting()
                 return true
