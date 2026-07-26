@@ -9,10 +9,39 @@ import SpriteKit
 
 @MainActor
 class GameScene: SKScene {
+    private enum UITestScenario: String {
+        case disabled
+        case scoreSequence
+        case gameOver
+
+        static func currentProcessScenario() -> UITestScenario {
+            let processInfo = ProcessInfo.processInfo
+            if let rawValue = processInfo.environment["SUPERSEVENS_UI_TEST_SCENARIO"] {
+                return UITestScenario(rawValue: rawValue) ?? .disabled
+            }
+            if let argumentIndex = processInfo.arguments.firstIndex(of: "-uiTestScenario"),
+               processInfo.arguments.indices.contains(argumentIndex + 1) {
+                return UITestScenario(rawValue: processInfo.arguments[argumentIndex + 1]) ?? .disabled
+            }
+            return .disabled
+        }
+
+        var isEnabled: Bool {
+            self != .disabled
+        }
+    }
+
+    private enum AccessibilityValueFormatter {
+        static func value(stateDescription: String, score: Int, selectionCount: Int, runningTotal: String) -> String {
+            "state=\(stateDescription); score=\(score); selection=\(selectionCount); total=\(runningTotal)"
+        }
+    }
+
     private static let minimumTapTargetSize: CGFloat = 44
 
     private var gameManager = GameManager()
     private var spawnerManager: SpawnerManager?
+    private let uiTestScenario = UITestScenario.currentProcessScenario()
 
     private var selectedNodes: [SKNode] = []
     private var lineNode: SKShapeNode?
@@ -45,6 +74,11 @@ class GameScene: SKScene {
     override func didMove(to view: SKView) {
         super.didMove(to: view)
         setupHUD()
+        updateAccessibilityState()
+        if uiTestScenario.isEnabled {
+            configureUITestScenario()
+            return
+        }
         SoundManager.shared.playBackgroundMusic()
         spawnerManager?.startSpawning()
     }
@@ -95,20 +129,24 @@ class GameScene: SKScene {
         addChild(muteNode)
         muteLabel = muteNode
         updateMuteLabel()
+        updateAccessibilityState()
     }
 
     private func updateScoreLabel() {
         scoreLabel?.text = "Score: \(gameManager.score)"
+        updateAccessibilityState()
     }
 
     private func updateRunningTotalLabel() {
         guard !selectedNodes.isEmpty else {
             runningTotalLabel?.text = ""
+            updateAccessibilityState()
             return
         }
         let total = gameManager.evaluate(selectedNodes)
         runningTotalLabel?.text = "= \(total)"
         runningTotalLabel?.fontColor = total > 7 ? .red : (total == 7 ? .green : .yellow)
+        updateAccessibilityState()
     }
 
     // MARK: - Game Over
@@ -125,6 +163,7 @@ class GameScene: SKScene {
         overlay.position = CGPoint(x: size.width / 2, y: size.height / 2)
         addChild(overlay)
         gameOverNode = overlay
+        updateAccessibilityState()
     }
 
     private func handleGameOverTap(at location: CGPoint) {
@@ -159,11 +198,20 @@ class GameScene: SKScene {
         activeTouch = nil
         children
             .filter { $0.name?.hasPrefix(SpawnerManager.spawnNodePrefix) == true }
-            .forEach { $0.removeFromParent() }
+            .forEach { node in
+                if spawnerManager?.recycle(node) != true {
+                    node.removeFromParent()
+                }
+            }
         gameManager.reset()
         updateScoreLabel()
-        SoundManager.shared.playBackgroundMusic()
-        spawnerManager?.startSpawning()
+        if uiTestScenario.isEnabled {
+            configureUITestScenario()
+        } else {
+            SoundManager.shared.playBackgroundMusic()
+            spawnerManager?.startSpawning()
+        }
+        updateAccessibilityState()
     }
 
     // MARK: - Touch Handling
@@ -268,6 +316,7 @@ class GameScene: SKScene {
             SoundManager.shared.playErrorBuzz()
             resumeAndUnhighlight(captured)
         }
+        updateAccessibilityState()
     }
 
     // Called when total exceeds 7 mid-drag; cancels the touch, animates the chain,
@@ -323,6 +372,7 @@ class GameScene: SKScene {
             resumeAndUnhighlight(selectedNodes)
         }
         selectedNodes.removeAll()
+        updateAccessibilityState()
     }
 
     // Unhighlights nodes and restarts their fall from current position.
@@ -331,15 +381,16 @@ class GameScene: SKScene {
             applyHighlight(node, selected: false)
             let remainingY = node.position.y - SpawnerManager.offscreenRemovalY
             guard remainingY > 0 else {
-                node.removeFromParent()
+                if spawnerManager?.recycle(node) != true {
+                    node.removeFromParent()
+                }
                 return
             }
             // Scale fall duration proportionally to remaining travel distance.
-            // totalTravelY = scene height + spawn offset (80) + |offscreenRemovalY| (120).
-            let totalTravelY = size.height + 80 + abs(SpawnerManager.offscreenRemovalY)
+            let totalTravelY = SpawnerManager.totalTravelDistance(forSceneHeight: size.height)
             let duration = max(0.5, (remainingY / totalTravelY) * GameScene.baseFallDuration)
             let moveDown = SKAction.moveTo(y: SpawnerManager.offscreenRemovalY, duration: duration)
-            let cleanup = SKAction.removeFromParent()
+            let cleanup = spawnerManager?.recycleAction(for: node) ?? .removeFromParent()
             node.run(.sequence([moveDown, cleanup]))
         }
     }
@@ -392,7 +443,7 @@ class GameScene: SKScene {
         nodes.forEach { node in
             let scaleUp = SKAction.scale(to: 1.6, duration: 0.1)
             let fadeOut = SKAction.fadeOut(withDuration: 0.2)
-            let remove = SKAction.removeFromParent()
+            let remove = spawnerManager?.recycleAction(for: node) ?? .removeFromParent()
             node.run(.sequence([scaleUp, fadeOut, remove]))
         }
     }
@@ -406,8 +457,55 @@ class GameScene: SKScene {
                 SKAction.moveBy(x: -8, y: 0, duration: 0.05)
             ])
             let fadeOut = SKAction.fadeOut(withDuration: 0.3)
-            let remove = SKAction.removeFromParent()
+            let remove = spawnerManager?.recycleAction(for: node) ?? .removeFromParent()
             node.run(.sequence([redFlash, shake, fadeOut, remove]))
         }
+    }
+
+    private func updateAccessibilityState() {
+        guard uiTestScenario.isEnabled else {
+            view?.accessibilityValue = nil
+            return
+        }
+        let stateDescription = gameManager.gameState == .playing ? "playing" : "gameOver"
+        let runningTotal = selectedNodes.isEmpty ? "none" : String(gameManager.evaluate(selectedNodes))
+        view?.accessibilityValue = AccessibilityValueFormatter.value(
+            stateDescription: stateDescription,
+            score: gameManager.score,
+            selectionCount: selectedNodes.count,
+            runningTotal: runningTotal
+        )
+    }
+
+    private func configureUITestScenario() {
+        SoundManager.shared.stopBackgroundMusic()
+        spawnerManager?.stopSpawning()
+        spawnerManager?.recycleSpawnedNodes(children.filter { $0.name?.hasPrefix(SpawnerManager.spawnNodePrefix) == true })
+
+        switch uiTestScenario {
+        case .disabled:
+            break
+        case .scoreSequence:
+            addUITestSpawnedNumber(value: 3, normalizedX: 0.35)
+            addUITestSpawnedNumber(value: 4, normalizedX: 0.65)
+        case .gameOver:
+            addUITestSpawnedNumber(value: 4, normalizedX: 0.35)
+            addUITestSpawnedNumber(value: 4, normalizedX: 0.65)
+        }
+
+        updateAccessibilityState()
+    }
+
+    private func addUITestSpawnedNumber(value: Int, normalizedX: CGFloat) {
+        guard let spawnerManager else {
+            assertionFailure("SpawnerManager must exist before configuring UI test nodes.")
+            return
+        }
+        let node = spawnerManager.dequeueNumberNode(value: value)
+        spawnerManager.prepareSpawnedNode(
+            node,
+            position: CGPoint(x: size.width * normalizedX, y: size.height * 0.55)
+        )
+        addChild(node)
     }
 }

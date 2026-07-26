@@ -4,6 +4,11 @@ import SpriteKit
 final class SpawnerManager {
     static let spawnNodePrefix = "spawned_"
     static let offscreenRemovalY: CGFloat = -120
+    static let spawnYOffset: CGFloat = 80
+
+    static func totalTravelDistance(forSceneHeight sceneHeight: CGFloat) -> CGFloat {
+        sceneHeight + spawnYOffset + abs(offscreenRemovalY)
+    }
 
     weak var scene: SKScene?
     var baseSpawnInterval: TimeInterval {
@@ -34,6 +39,9 @@ final class SpawnerManager {
     private var lastSpawnTime: TimeInterval?
     private var spawnStartTime: TimeInterval?
     private var isSpawning = false
+    private var nextSpawnedNodeID: UInt64 = 0
+    private var pooledNumberNodes: [Int: [NumberNode]] = [:]
+    private var pooledSpecialItemNodes: [SpecialItemType: [SpecialItemNode]] = [:]
 
     init(
         scene: SKScene,
@@ -85,10 +93,7 @@ final class SpawnerManager {
         }
 
         guard tappedSpawnedNodes.isEmpty == false else { return false }
-        tappedSpawnedNodes.forEach { node in
-            node.removeAllActions()
-            node.removeFromParent()
-        }
+        recycleSpawnedNodes(tappedSpawnedNodes)
         return true
     }
 
@@ -100,13 +105,10 @@ final class SpawnerManager {
                 $0.name?.hasPrefix(Self.spawnNodePrefix) == true &&
                 $0.position.y < Self.offscreenRemovalY
             }
-            .forEach { node in
-                node.removeAllActions()
-                node.removeFromParent()
-            }
+            .forEach(recycle)
     }
 
-    private func currentSpawnInterval(elapsedTime: TimeInterval, score: Int) -> TimeInterval {
+    func currentSpawnInterval(elapsedTime: TimeInterval, score: Int) -> TimeInterval {
         let timeReduction = min(maxTimeReduction, elapsedTime * timeReductionRate)
         let scoreReduction = min(maxScoreReduction, TimeInterval(score) * scoreReductionRate)
         return max(minimumSpawnInterval, baseSpawnInterval - timeReduction - scoreReduction)
@@ -119,28 +121,90 @@ final class SpawnerManager {
         let minX = spawnMargin
         let maxX = scene.size.width - spawnMargin
         let x = CGFloat.random(in: minX...maxX)
-        let y = scene.size.height + 80
+        let y = scene.size.height + Self.spawnYOffset
 
         let node: SKNode
-        if Double.random(in: 0...1) < specialSpawnProbability {
-            let itemTypes = SpecialItemType.allCases
-            let itemType = itemTypes.randomElement()!
-            node = SpecialItemNode(itemType: itemType)
+        if shouldSpawnSpecial(randomValue: Double.random(in: 0...1)) {
+            node = dequeueSpecialItemNode(itemType: SpecialItemType.allCases.randomElement()!)
         } else {
-            let value = Int.random(in: NumberNode.validRange)
-            node = NumberNode(value: value)
+            node = dequeueNumberNode(value: Int.random(in: NumberNode.validRange))
         }
 
-        node.name = "\(Self.spawnNodePrefix)\(UUID().uuidString)"
-        node.position = CGPoint(x: x, y: y)
+        prepareSpawnedNode(node, position: CGPoint(x: x, y: y))
         scene.addChild(node)
         SoundManager.shared.playNodeSpawn()
 
         let speedScale = max(minimumSpeedScale, interval * baseSpawnIntervalReciprocal)
         let duration = baseFallDuration * speedScale
         let moveDown = SKAction.moveTo(y: Self.offscreenRemovalY, duration: duration)
-        let cleanup = SKAction.removeFromParent()
+        let cleanup = recycleAction(for: node)
         node.run(.sequence([moveDown, cleanup]))
+    }
+
+    func shouldSpawnSpecial(randomValue: Double) -> Bool {
+        randomValue < specialSpawnProbability
+    }
+
+    func dequeueNumberNode(value: Int) -> NumberNode {
+        var pooledNodes = pooledNumberNodes[value] ?? []
+        let node = pooledNodes.popLast() ?? NumberNode(value: value)
+        pooledNumberNodes[value] = pooledNodes
+        node.prepareForReuse()
+        return node
+    }
+
+    func dequeueSpecialItemNode(itemType: SpecialItemType) -> SpecialItemNode {
+        var pooledNodes = pooledSpecialItemNodes[itemType] ?? []
+        let node = pooledNodes.popLast() ?? SpecialItemNode(itemType: itemType)
+        pooledSpecialItemNodes[itemType] = pooledNodes
+        node.prepareForReuse()
+        return node
+    }
+
+    @discardableResult
+    func recycle(_ node: SKNode?) -> Bool {
+        guard let node else { return false }
+        guard node.name?.hasPrefix(Self.spawnNodePrefix) == true else { return false }
+
+        switch node {
+        case let numberNode as NumberNode:
+            numberNode.removeAllActions()
+            numberNode.removeFromParent()
+            pooledNumberNodes[numberNode.value, default: []].append(numberNode)
+            return true
+        case let specialNode as SpecialItemNode:
+            specialNode.removeAllActions()
+            specialNode.removeFromParent()
+            pooledSpecialItemNodes[specialNode.itemType, default: []].append(specialNode)
+            return true
+        default:
+            return false
+        }
+    }
+
+    func recycleSpawnedNodes(_ nodes: [SKNode]) {
+        nodes.forEach(recycle)
+    }
+
+    func recycleAction(for node: SKNode) -> SKAction {
+        SKAction.run { [weak self, weak node] in
+            self?.recycle(node)
+        }
+    }
+
+    func prepareSpawnedNode(_ node: SKNode, position: CGPoint) {
+        node.removeAllActions()
+        node.alpha = 1
+        node.xScale = 1
+        node.yScale = 1
+        node.zRotation = 0
+        node.name = nextSpawnNodeName()
+        node.position = position
+    }
+
+    private func nextSpawnNodeName() -> String {
+        defer { nextSpawnedNodeID += 1 }
+        return "\(Self.spawnNodePrefix)\(nextSpawnedNodeID)"
     }
 
     private static func validate(baseSpawnInterval: TimeInterval, minimumSpawnInterval: TimeInterval) {

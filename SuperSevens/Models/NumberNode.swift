@@ -28,4 +28,10 @@ final class NumberNode: SKShapeNode {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) is not supported for NumberNode.")
     }
+
+    func prepareForReuse() {
+        fillColor = .systemBlue
+        strokeColor = .white
+        lineWidth = 2
+    }
 }

@@ -1,11 +1,11 @@
 import SpriteKit
 
-enum GameState {
+enum GameState: Equatable {
     case playing
     case gameOver
 }
 
-enum CombinationResult {
+enum CombinationResult: Equatable {
     case success
     case exceeded
     case invalid
@@ -122,7 +122,7 @@ final class GameManager {
         guard gameState == .playing, !nodes.isEmpty else { return .invalid }
         guard let gameNodes = convertToGameNodes(nodes) else { return .invalid }
         if validateCombination(gameNodes) {
-            score += scoreForChain(gameNodes)
+            score += score(for: gameNodes)
             return .success
         } else if gameState == .gameOver {
             return .exceeded
@@ -145,7 +145,7 @@ final class GameManager {
         gameState = .gameOver
     }
 
-    private func scoreForChain(_ nodes: [GameNode]) -> Int {
+    func score(for nodes: [GameNode]) -> Int {
         let multiplierCount = nodes
             .compactMap(\.nodeSpecialItemType)
             .filter { $0 == .multiplier }
