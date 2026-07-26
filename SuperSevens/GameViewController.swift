@@ -13,10 +13,10 @@ class GameViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-guard let view = self.view as? SKView else {
-    assertionFailure("Expected GameViewController.view to be an SKView")
-    return
-}
+        guard let view = self.view as? SKView else {
+            assertionFailure("Expected GameViewController.view to be an SKView")
+            return
+        }
         view.isAccessibilityElement = true
         view.accessibilityIdentifier = "gameView"
         let scene = GameScene(size: view.bounds.size)
