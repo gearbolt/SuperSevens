@@ -134,6 +134,7 @@ class GameScene: SKScene {
     // MARK: - Game Over
 
     private func showGameOver() {
+        guard gameOverNode == nil else { return }
         spawnerManager?.stopSpawning()
         SoundManager.shared.stopBackgroundMusic()
         let overlay = GameOverNode(
