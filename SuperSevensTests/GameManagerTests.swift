@@ -286,6 +286,24 @@ final class GameManagerTests: XCTestCase {
         XCTAssertEqual(manager.gameState, .playing)
     }
 
+    func testResumeIsNoOpWhenAlreadyPlaying() {
+        let manager = GameManager()
+
+        manager.resume()  // Should be a no-op
+
+        XCTAssertEqual(manager.gameState, .playing)
+    }
+
+    func testResumeIsNoOpWhenGameOver() {
+        let manager = GameManager(lives: 1)
+        _ = manager.validateCombination([MockNode.number(4), MockNode.number(4)])
+        XCTAssertEqual(manager.gameState, .gameOver)
+
+        manager.resume()  // Should be a no-op
+
+        XCTAssertEqual(manager.gameState, .gameOver)
+    }
+
     func testPauseIsIgnoredWhenNotPlaying() {
         let manager = GameManager(lives: 1)
         _ = manager.validateCombination([MockNode.number(4), MockNode.number(4)])

@@ -16,6 +16,9 @@ final class HUDNode: SKNode {
 
     private static let heartSpacing: CGFloat = 28
     private static let pauseButtonMinTargetSize: CGFloat = 44
+    private static let scoreBumpScale: CGFloat = 1.3
+    private static let scoreBumpUpDuration: TimeInterval = 0.08
+    private static let scoreBumpDownDuration: TimeInterval = 0.14
 
     private let scoreLabel: SKLabelNode
     private let runningTotalLabel: SKLabelNode
@@ -156,9 +159,9 @@ final class HUDNode: SKNode {
 
     private func animateScoreBump() {
         scoreLabel.removeAction(forKey: "scoreBump")
-        let scaleUp = SKAction.scale(to: 1.3, duration: 0.08)
+        let scaleUp = SKAction.scale(to: Self.scoreBumpScale, duration: Self.scoreBumpUpDuration)
         scaleUp.timingMode = .easeOut
-        let scaleDown = SKAction.scale(to: 1.0, duration: 0.14)
+        let scaleDown = SKAction.scale(to: 1.0, duration: Self.scoreBumpDownDuration)
         scaleDown.timingMode = .easeIn
         scoreLabel.run(.sequence([scaleUp, scaleDown]), withKey: "scoreBump")
     }
