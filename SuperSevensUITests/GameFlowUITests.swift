@@ -23,6 +23,7 @@ final class GameFlowUITests: XCTestCase {
     func testTapSequenceFlowTriggersGameOverWhenSelectionExceedsSeven() {
         let app = XCUIApplication()
         app.launchEnvironment["SUPERSEVENS_UI_TEST_SCENARIO"] = "gameOver"
+        app.launchEnvironment["SUPERSEVENS_UI_TEST_LIVES"] = "1"
         app.launch()
 
         let gameView = app.otherElements["gameView"]

@@ -2,6 +2,7 @@ import SpriteKit
 
 enum GameState: Equatable {
     case playing
+    case paused
     case gameOver
 }
 
@@ -27,15 +28,35 @@ extension SpecialItemNode: GameNode {
 }
 
 final class GameManager {
+    static let initialLives = 3
     private static let highScoreKey = "superSevens_highScore"
 
     private(set) var score: Int = 0
     private(set) var gameState: GameState = .playing
     private(set) var highScore: Int
     private(set) var isNewHighScore: Bool = false
+    private(set) var lives: Int
 
-    init() {
+    /// Initialises the manager with the given number of lives.
+    /// In production the default (`initialLives`) is used; tests may supply 1 to
+    /// trigger a full game-over on the first exceed-7 event.
+    /// The `SUPERSEVENS_UI_TEST_LIVES` environment variable overrides `lives` when
+    /// set, allowing UI-test launch configurations to control the starting life count.
+    init(lives: Int = Self.initialLives) {
+        let uiTestLives = ProcessInfo.processInfo.environment["SUPERSEVENS_UI_TEST_LIVES"].flatMap(Int.init)
+        let resolvedLives = uiTestLives ?? lives
+        self.lives = max(1, resolvedLives)
         highScore = UserDefaults.standard.integer(forKey: Self.highScoreKey)
+    }
+
+    func pause() {
+        guard gameState == .playing else { return }
+        gameState = .paused
+    }
+
+    func resume() {
+        guard gameState == .paused else { return }
+        gameState = .playing
     }
 
     // Evaluates the chain left-to-right and returns the running total.
@@ -119,15 +140,16 @@ final class GameManager {
     }
 
     // Submits the combination. Returns .success if total == 7 (score awarded),
-    // .exceeded if total > 7 (game over triggered), or .invalid otherwise.
+    // .exceeded if total > 7 (life lost, or game over if lives exhausted), or .invalid otherwise.
     @discardableResult
     func submitCombination(_ nodes: [SKNode]) -> CombinationResult {
         guard gameState == .playing, !nodes.isEmpty else { return .invalid }
         guard let gameNodes = convertToGameNodes(nodes) else { return .invalid }
+        let previousLives = lives
         if validateCombination(gameNodes) {
             score += score(for: gameNodes)
             return .success
-        } else if gameState == .gameOver {
+        } else if gameState == .gameOver || lives < previousLives {
             return .exceeded
         }
         return .invalid
@@ -135,11 +157,15 @@ final class GameManager {
 
     func reset() {
         score = 0
+        lives = Self.initialLives
         gameState = .playing
         isNewHighScore = false
     }
 
     private func setGameOver() {
+        // Decrements a life for an exceed-7 event; only transitions to `.gameOver` when lives reaches 0.
+        lives -= 1
+        guard lives <= 0 else { return }
         isNewHighScore = score > highScore
         if isNewHighScore {
             highScore = score

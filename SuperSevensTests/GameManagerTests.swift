@@ -125,7 +125,7 @@ final class GameManagerTests: XCTestCase {
     }
 
     func testValidateCombinationTriggersGameOverWhenExceedsSevenMidCombination() {
-        let manager = GameManager()
+        let manager = GameManager(lives: 1)
 
         let result = manager.validateCombination([
             MockNode.number(4),
@@ -142,7 +142,7 @@ final class GameManagerTests: XCTestCase {
         UserDefaults.standard.removeObject(forKey: key)
         defer { UserDefaults.standard.removeObject(forKey: key) }
 
-        let manager = GameManager()
+        let manager = GameManager(lives: 1)
 
         _ = manager.validateCombination([
             MockNode.number(4),
@@ -222,5 +222,95 @@ final class GameManagerTests: XCTestCase {
 
         XCTAssertEqual(result, .success)
         XCTAssertEqual(manager.score, 200)
+    }
+
+    // MARK: - Lives tests
+
+    func testExceedingSevenDecrementsLivesWithoutFullGameOver() {
+        let manager = GameManager()
+
+        let result = manager.validateCombination([MockNode.number(4), MockNode.number(4)])
+
+        XCTAssertFalse(result)
+        XCTAssertEqual(manager.lives, GameManager.initialLives - 1)
+        XCTAssertEqual(manager.gameState, .playing)
+    }
+
+    func testGameOverIsTriggeredOnlyWhenAllLivesAreExhausted() {
+        let manager = GameManager()
+        for _ in 0..<GameManager.initialLives {
+            _ = manager.validateCombination([MockNode.number(4), MockNode.number(4)])
+        }
+
+        XCTAssertEqual(manager.lives, 0)
+        XCTAssertEqual(manager.gameState, .gameOver)
+    }
+
+    func testSubmitCombinationReturnsExceededWhenLivesRemainingAfterOverflow() {
+        let manager = GameManager()
+        let nodes: [SKNode] = [NumberNode(value: 4), NumberNode(value: 4)]
+
+        let result = manager.submitCombination(nodes)
+
+        XCTAssertEqual(result, .exceeded)
+        XCTAssertEqual(manager.gameState, .playing)
+    }
+
+    func testResetRestoresLivesToInitialCount() {
+        let manager = GameManager(lives: 1)
+        _ = manager.validateCombination([MockNode.number(4), MockNode.number(4)])
+        XCTAssertEqual(manager.gameState, .gameOver)
+
+        manager.reset()
+
+        XCTAssertEqual(manager.lives, GameManager.initialLives)
+        XCTAssertEqual(manager.gameState, .playing)
+    }
+
+    // MARK: - Pause / resume tests
+
+    func testPauseTransitionsStateToPaused() {
+        let manager = GameManager()
+
+        manager.pause()
+
+        XCTAssertEqual(manager.gameState, .paused)
+    }
+
+    func testResumeRestoresPlayingStateAfterPause() {
+        let manager = GameManager()
+        manager.pause()
+
+        manager.resume()
+
+        XCTAssertEqual(manager.gameState, .playing)
+    }
+
+    func testResumeIsNoOpWhenAlreadyPlaying() {
+        let manager = GameManager()
+
+        manager.resume()  // Should be a no-op
+
+        XCTAssertEqual(manager.gameState, .playing)
+    }
+
+    func testResumeIsNoOpWhenGameOver() {
+        let manager = GameManager(lives: 1)
+        _ = manager.validateCombination([MockNode.number(4), MockNode.number(4)])
+        XCTAssertEqual(manager.gameState, .gameOver)
+
+        manager.resume()  // Should be a no-op
+
+        XCTAssertEqual(manager.gameState, .gameOver)
+    }
+
+    func testPauseIsIgnoredWhenNotPlaying() {
+        let manager = GameManager(lives: 1)
+        _ = manager.validateCombination([MockNode.number(4), MockNode.number(4)])
+        XCTAssertEqual(manager.gameState, .gameOver)
+
+        manager.pause()  // Should be a no-op
+
+        XCTAssertEqual(manager.gameState, .gameOver)
     }
 }

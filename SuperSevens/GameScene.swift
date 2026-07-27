@@ -32,8 +32,8 @@ class GameScene: SKScene {
     }
 
     private enum AccessibilityValueFormatter {
-        static func value(stateDescription: String, score: Int, selectionCount: Int, runningTotal: String) -> String {
-            "state=\(stateDescription); score=\(score); selection=\(selectionCount); total=\(runningTotal)"
+        static func value(stateDescription: String, score: Int, lives: Int, selectionCount: Int, runningTotal: String) -> String {
+            "state=\(stateDescription); score=\(score); lives=\(lives); selection=\(selectionCount); total=\(runningTotal)"
         }
     }
 
@@ -100,12 +100,13 @@ class GameScene: SKScene {
         let hud = HUDNode(sceneSize: size)
         addChild(hud)
         hudNode = hud
+        hud.updateLives(gameManager.lives)
 
         let muteNode = SKLabelNode(fontNamed: "AvenirNext-Bold")
-        muteNode.fontSize = 18
+        muteNode.fontSize = 16
         muteNode.fontColor = .white
         muteNode.horizontalAlignmentMode = .right
-        muteNode.position = CGPoint(x: size.width - 20, y: size.height - 50)
+        muteNode.position = CGPoint(x: size.width - 16, y: size.height - 82)
         muteNode.zPosition = 10
         muteNode.name = "muteToggleLabel"
         addChild(muteNode)
@@ -133,6 +134,7 @@ class GameScene: SKScene {
     // MARK: - Game Over
 
     private func showGameOver() {
+        guard gameOverNode == nil else { return }
         spawnerManager?.stopSpawning()
         SoundManager.shared.stopBackgroundMusic()
         let overlay = GameOverNode(
@@ -171,6 +173,8 @@ class GameScene: SKScene {
     }
 
     private func restartGame() {
+        speed = 1
+        hudNode?.setPaused(false)
         gameOverNode?.removeFromParent()
         gameOverNode = nil
         lineNode?.removeFromParent()
@@ -186,6 +190,7 @@ class GameScene: SKScene {
             }
         gameManager.reset()
         updateScoreLabel()
+        hudNode?.updateLives(gameManager.lives)
         if uiTestScenario.isEnabled {
             configureUITestScenario()
         } else {
@@ -202,6 +207,14 @@ class GameScene: SKScene {
         let location = touch.location(in: self)
 
         if handleMuteToggleTap(at: location) {
+            return
+        }
+
+        if handlePauseButtonTap(at: location) {
+            return
+        }
+
+        if gameManager.gameState == .paused {
             return
         }
 
@@ -290,8 +303,12 @@ class GameScene: SKScene {
         case .exceeded:
             SoundManager.shared.playErrorBuzz()
             animateFailure(captured)
+            hudNode?.updateLives(gameManager.lives)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.showGameOver()
+                guard let self else { return }
+                if self.gameManager.gameState == .gameOver {
+                    self.showGameOver()
+                }
             }
         case .invalid:
             SoundManager.shared.playErrorBuzz()
@@ -301,7 +318,7 @@ class GameScene: SKScene {
     }
 
     // Called when total exceeds 7 mid-drag; cancels the touch, animates the chain,
-    // and schedules the game over overlay without waiting for finger lift.
+    // and schedules the game over overlay (if lives exhausted) without waiting for finger lift.
     private func triggerGameOverFromSelection() {
         lineNode?.removeFromParent()
         lineNode = nil
@@ -311,8 +328,12 @@ class GameScene: SKScene {
         selectedNodes.removeAll()
         SoundManager.shared.playErrorBuzz()
         animateFailure(captured)
+        hudNode?.updateLives(gameManager.lives)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.showGameOver()
+            guard let self else { return }
+            if self.gameManager.gameState == .gameOver {
+                self.showGameOver()
+            }
         }
     }
 
@@ -333,6 +354,27 @@ class GameScene: SKScene {
             }
         }
         return false
+    }
+
+    private func handlePauseButtonTap(at location: CGPoint) -> Bool {
+        guard let hudNode else { return false }
+        guard hudNode.hitTestPauseButton(at: location) else { return false }
+        togglePause()
+        return true
+    }
+
+    private func togglePause() {
+        if gameManager.gameState == .playing {
+            gameManager.pause()
+            speed = 0
+            hudNode?.setPaused(true)
+            clearSelection(resumeNodes: true)
+        } else if gameManager.gameState == .paused {
+            gameManager.resume()
+            speed = 1
+            hudNode?.setPaused(false)
+        }
+        updateAccessibilityState()
     }
 
     private func toggleMuteSetting() {
@@ -448,11 +490,17 @@ class GameScene: SKScene {
             view?.accessibilityValue = nil
             return
         }
-        let stateDescription = gameManager.gameState == .playing ? "playing" : "gameOver"
+        let stateDescription: String
+        switch gameManager.gameState {
+        case .playing: stateDescription = "playing"
+        case .paused: stateDescription = "paused"
+        case .gameOver: stateDescription = "gameOver"
+        }
         let runningTotal = selectedNodes.isEmpty ? "none" : String(gameManager.evaluate(selectedNodes))
         view?.accessibilityValue = AccessibilityValueFormatter.value(
             stateDescription: stateDescription,
             score: gameManager.score,
+            lives: gameManager.lives,
             selectionCount: selectedNodes.count,
             runningTotal: runningTotal
         )
