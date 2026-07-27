@@ -24,6 +24,7 @@ final class HUDNode: SKNode {
     private let runningTotalLabel: SKLabelNode
     private let pauseButton: SKLabelNode
     private var heartNodes: [SKLabelNode] = []
+    private var lastRenderedLives: Int?
 
     init(sceneSize: CGSize) {
         scoreLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
