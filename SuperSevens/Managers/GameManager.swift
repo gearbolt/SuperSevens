@@ -162,6 +162,7 @@ final class GameManager {
     }
 
     private func setGameOver() {
+        // Decrements a life for an exceed-7 event; only transitions to `.gameOver` when lives reaches 0.
         lives -= 1
         guard lives <= 0 else { return }
         isNewHighScore = score > highScore
