@@ -22,7 +22,8 @@ final class SoundManager {
     private let successHaptic = UIImpactFeedbackGenerator(style: .medium)
     private var shouldPlayBackgroundMusic = false
 
-    private(set) var isMuted: Bool = Self.loadMutedPreference() {
+    private(set) var isMuted: Bool = SoundManager.loadMutedPreference() {
+    //private(set) var isMuted: Bool = Self.loadMutedPreference() {
         didSet {
             UserDefaults.standard.set(isMuted, forKey: Self.mutedKey)
             if isMuted {
@@ -105,11 +106,32 @@ func playCorrectMatch() {
         player.play()
     }
 
+    /*
     private func createPlayer(named name: String, loops: Int) -> AVAudioPlayer? {
         guard let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: Asset.audioSubdirectory) else {
             assertionFailure("Missing audio asset: \(Asset.audioSubdirectory)/\(name).wav")
             return nil
         }
+        guard let player = try? AVAudioPlayer(contentsOf: url) else {
+            assertionFailure("Failed to load audio asset: \(url.lastPathComponent)")
+            return nil
+        }
+        player.numberOfLoops = loops
+        player.prepareToPlay()
+        return player
+    }*/
+    
+    private func createPlayer(named name: String, loops: Int) -> AVAudioPlayer? {
+        // Try the Audio subdirectory first (if files are added as a folder reference),
+        // then fall back to a bundle-root lookup (common when files were added as a group).
+        let url = Bundle.main.url(forResource: name, withExtension: "wav", subdirectory: Asset.audioSubdirectory)
+            ?? Bundle.main.url(forResource: name, withExtension: "wav")
+
+        guard let url = url else {
+            assertionFailure("Missing audio asset: \(Asset.audioSubdirectory)/\(name).wav or \(name).wav")
+            return nil
+        }
+
         guard let player = try? AVAudioPlayer(contentsOf: url) else {
             assertionFailure("Failed to load audio asset: \(url.lastPathComponent)")
             return nil
