@@ -105,7 +105,9 @@ final class SpawnerManager {
                 $0.name?.hasPrefix(Self.spawnNodePrefix) == true &&
                 $0.position.y < Self.offscreenRemovalY
             }
-            .forEach(recycle)
+            //.forEach(recycle)
+            .forEach { node in _ = recycle(node)
+            }
     }
 
     func currentSpawnInterval(elapsedTime: TimeInterval, score: Int) -> TimeInterval {
@@ -198,10 +200,16 @@ final class SpawnerManager {
         }
     }
 
-    func recycleSpawnedNodes(_ nodes: [SKNode]) {
-        nodes.forEach(recycle)
-    }
+    //func recycleSpawnedNodes(_ nodes: [SKNode]) {
+      //  nodes.forEach(recycle)
+    //}
 
+    func recycleSpawnedNodes(_ nodes: [SKNode]) {
+        nodes.forEach { node in
+            _ = recycle(node)
+        }
+    }
+    
     func recycleAction(for node: SKNode) -> SKAction {
         SKAction.run { [weak self, weak node] in
             self?.recycle(node)

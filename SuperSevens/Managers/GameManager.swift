@@ -42,7 +42,7 @@ final class GameManager {
     /// trigger a full game-over on the first exceed-7 event.
     /// The `SUPERSEVENS_UI_TEST_LIVES` environment variable overrides `lives` when
     /// set, allowing UI-test launch configurations to control the starting life count.
-    init(lives: Int = Self.initialLives) {
+    init(lives: Int = GameManager.initialLives) {
         let uiTestLives = ProcessInfo.processInfo.environment["SUPERSEVENS_UI_TEST_LIVES"].flatMap(Int.init)
         let resolvedLives = uiTestLives ?? lives
         self.lives = max(1, resolvedLives)
