@@ -44,7 +44,8 @@ final class GameManager {
     /// set, allowing UI-test launch configurations to control the starting life count.
     init(lives: Int = Self.initialLives) {
         let uiTestLives = ProcessInfo.processInfo.environment["SUPERSEVENS_UI_TEST_LIVES"].flatMap(Int.init)
-        self.lives = uiTestLives ?? lives
+        let resolvedLives = uiTestLives ?? lives
+        self.lives = max(1, resolvedLives)
         highScore = UserDefaults.standard.integer(forKey: Self.highScoreKey)
     }
 
